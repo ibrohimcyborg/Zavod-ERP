@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="screen-orientation" content="any">
+<title>Tilla Hisob</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
+:root{--bg:#0f0f0f;--surf:#1a1a1a;--surf2:#242424;--border:#2a2a2a;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ede6;--muted:#666;--red:#e05a5a;--green:#5ab87a;--r:14px;--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);}
+[data-theme="light"]{--bg:#f5f4f0;--surf:#ffffff;--surf2:#f0efe9;--border:#e0ddd4;--text:#1a1a1a;--muted:#999;--gold:#a07830;--gold2:#b89040;--red:#d04040;--green:#3a9060;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;padding-bottom:calc(20px + var(--safe-bot));-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
+.topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:0 16px;padding-top:var(--safe-top);height:calc(54px + var(--safe-top));display:flex;align-items:flex-end;padding-bottom:10px;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Roboto',sans-serif;font-size:14px;color:var(--gold);letter-spacing:.1em;font-weight:500;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.theme-btn{width:32px;height:32px;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.main-tabs{display:flex;background:var(--surf);border-bottom:1px solid var(--border);position:sticky;top:calc(54px + var(--safe-top));z-index:99;}
+.main-tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;}
+.main-tab.active{color:var(--gold);border-bottom:2px solid var(--gold);font-weight:600;}
+.screen{display:none;padding:16px;max-width:520px;margin:0 auto;}
+.screen.active{display:block;}
+.back-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.back-btn{background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;}
+.stitle{font-size:19px;font-weight:600;color:var(--text);}
+.big-stat{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;position:relative;overflow:hidden;}
+.big-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.big-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.big-stat-val{font-family:'Roboto',sans-serif;font-size:36px;color:var(--gold);font-weight:500;line-height:1;}
+.big-stat-val span{font-size:18px;color:var(--muted);margin-left:4px;}
+.big-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.big-btn{border-radius:var(--r);padding:18px 16px;cursor:pointer;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;transition:all .15s;}
+.big-btn.kirim{background:#0f1f10;border-color:#1e3a1e;}
+.big-btn.chiqim{background:#1f0f0f;border-color:#3a1e1e;}
+.big-btn-icon{font-size:24px;opacity:.8;}
+.big-btn-label{font-size:17px;font-weight:600;}
+.big-btn.kirim .big-btn-label{color:var(--green);}
+.big-btn.chiqim .big-btn-label{color:var(--red);}
+.big-btn-sub{font-size:12px;color:var(--muted);}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
+.field{margin-bottom:12px;}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;font-weight:500;}
+.field input,.field select{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:16px;font-family:'Roboto',sans-serif;background:var(--surf2);color:var(--text);-webkit-appearance:none;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--gold);}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+.btn-row{display:flex;gap:10px;margin-top:16px;}
+.btn{padding:13px 18px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;color:var(--text);background:var(--surf2);flex:1;transition:all .15s;}
+.btn.gold{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.btn.ok{background:#0f2a1a;color:var(--green);border-color:#1e4a2a;}
+.action-btn{padding:8px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;color:var(--text);background:var(--surf2);display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surf);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:22px 20px;padding-bottom:calc(22px + var(--safe-bot));width:100%;max-width:520px;animation:slideUp .25s ease;max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:16px;}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:14px;line-height:2;}
+.empty-icon{font-size:36px;opacity:.2;margin-bottom:8px;}
+.zrow{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.zrow-name{font-size:16px;font-weight:600;color:var(--text);}
+.zrow-g{font-family:'Roboto',sans-serif;font-size:18px;color:var(--gold);font-weight:500;}
+.tacc{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;}
+.tacc-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.tacc-name{font-size:15px;font-weight:600;color:var(--text);}
+.tacc-g{font-family:'Roboto',sans-serif;font-size:16px;color:var(--gold);}
+.tacc-body{display:none;border-top:1px solid var(--border);background:var(--surf2);padding:12px 14px;}
+.tacc.open .tacc-body{display:block;}
+.stat2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.stat2-item{background:var(--surf);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);}
+.stat2-label{font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;}
+.trow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.trow:last-child{border-bottom:none;}
+.trow-info{color:var(--muted);margin-top:2px;font-size:11px;}
+.hrow{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;}
+.nav-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surf2);border-radius:12px;padding:4px;}
+.nav-tab{flex:1;padding:9px;border-radius:9px;border:none;font-size:14px;font-family:'Outfit',sans-serif;cursor:pointer;background:transparent;color:var(--muted);text-align:center;transition:all .2s;font-weight:500;}
+.nav-tab.active{background:var(--surf);color:var(--text);font-weight:600;}
+.ctur-block{background:var(--surf2);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border);}
+.ctur-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.ctur-name{font-size:14px;font-weight:600;color:var(--text);}
+.ctur-bal{font-family:'Roboto',sans-serif;font-size:13px;color:var(--gold);}
+.ctur-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ctur-field input{width:100%;padding:9px 10px;border-radius:9px;border:1.5px solid var(--border);font-size:15px;font-family:'Roboto',sans-serif;background:var(--surf);color:var(--text);}
+.ctur-field input:focus{outline:none;border-color:var(--gold);}
+.davr-btn{width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;color:var(--text);background:var(--surf2);margin-bottom:8px;text-align:center;}
+.davr-date-row{display:flex;gap:8px;align-items:flex-end;background:var(--surf2);border-radius:12px;padding:12px;border:1.5px solid var(--border);margin-bottom:8px;}
+.ptr-indicator{position:fixed;top:-60px;left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;background:var(--surf);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;z-index:999;}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+/* ── PC (1024px+) ──────────────────────────────────────────── */
+
+
+/* ── TABLET (600-1024px) ─────────────────────────────────────── */
+@media(min-width:600px) and (max-width:1023px){
+  .screen{padding:20px;max-width:680px;}
+  .big-btn-row{grid-template-columns:1fr 1fr;gap:14px;}
+  .big-btn{padding:22px 20px;}
+  .big-stat-val{font-size:42px;}
+  .modal{border-radius:20px;margin-bottom:40px;max-width:500px;}
+  .modal-overlay{align-items:center;padding:20px;}
+  .nav-tab{font-size:15px;padding:11px;}
+  .zrow{padding:16px 18px;}
+  .hrow{padding:16px 18px;}
+  .field input,.field select{font-size:17px;padding:14px 16px;}
+}
+
+/* ── PC (1024px+) ────────────────────────────────────────────── */
+@media(min-width:1024px){
+  body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .topbar{max-width:100%;padding-left:24px;padding-right:24px;}
+  .main-tabs{display:none;}
+
+  #s-home{
+    display:flex!important;flex-direction:row;
+    flex:1;overflow:hidden;
+    border-top:1px solid var(--border);
+  }
+
+
+  .screen.active:not(#s-home){max-width:600px;margin:0 auto;}
+  .modal{max-width:520px;border-radius:20px;margin-bottom:40px;}
+  .modal-overlay{align-items:center;padding:20px;}
+
+  .big-btn{padding:16px 12px;}
+  .zrow{padding:14px 16px;}
+  .hrow{padding:14px 16px;}
+}
+
+/* ── LANDSCAPE MOBILE ────────────────────────────────────────── */
+@media(max-width:860px) and (orientation:landscape){
+  .topbar{height:calc(44px + var(--safe-top));}
+  .big-btn{padding:12px 14px;}
+  .big-btn-icon{font-size:18px;}
+  .big-btn-label{font-size:14px;}
+  .big-stat{padding:12px 16px;margin-bottom:10px;}
+  .big-stat-val{font-size:28px;}
+  .modal{max-height:85vh;overflow-y:auto;}
+}
+
+/* ── PC (1024px+) ikki panel ──────────────────────────────────── */
+@media (min-width: 1024px) {
+  .ptr-indicator { display: none !important; }
+  .main-tabs { display: none !important; }
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .topbar { max-width: 100%; padding-left: 20px; padding-right: 20px; }
+
+  #s-home.active {
+    display: flex !important; flex-direction: row;
+    padding: 0; max-width: 100%; margin: 0; flex: 1; overflow: hidden;
+  }
+
+  #main-zavod {
+    flex: 1; min-width: 0; display: none;
+    flex-direction: column; overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+  #main-klient {
+    flex: 1; min-width: 0; display: none;
+    flex-direction: column; overflow: hidden;
+  }
+  #s-home.active #main-zavod { display: flex !important; }
+  #s-home.active #main-klient { display: flex !important; }
+  .pc-zavod-hdr, .pc-klient-hdr {
+    flex-shrink: 0; padding: 14px 16px;
+    background: var(--surf); border-bottom: 1px solid var(--border);
+  }
+  .pc-zavod-body, .pc-klient-body {
+    flex: 1; overflow-y: auto; padding: 14px 16px;
+  }
+  .pc-btn-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 7px; }
+  .pc-btn-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .pc-zbtn {
+    border-radius: 10px; padding: 10px 8px; border: 0.5px solid;
+    display: flex; align-items: center; justify-content: center;
+    gap: 7px; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Outfit', sans-serif; background: none;
+  }
+  .pc-zbtn:active { opacity: .75; }
+  .pc-zbtn.kirim   { background: #0a1a0a; border-color: #1e4a1e; color: var(--green); }
+  .pc-zbtn.chiqim  { background: #1a0a0a; border-color: #4a1e1e; color: var(--red); }
+  .pc-zbtn.vozvrat { background: #0a121a; border-color: #1e2a4a; color: #5ab4e8; }
+  .pc-zbtn.pdf     { background: var(--surf2); border-color: #3a2a0a; color: var(--gold); }
+  .pc-zbtn.add     { background: var(--surf2); border-color: var(--border); color: var(--muted); }
+  .pc-kbtn {
+    border-radius: 10px; padding: 10px 8px; border: 0.5px solid;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 5px; cursor: pointer; background: none;
+  }
+  .pc-kbtn:active { opacity: .75; }
+  .pc-kbtn-ico { font-size: 20px; line-height: 1; }
+  .pc-kbtn-lbl { font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif; }
+  .pc-kbtn.berish  { background: #1a0a0a; border-color: #4a1e1e; }
+  .pc-kbtn.vozvrat { background: #0a121a; border-color: #1e2a4a; }
+  .pc-kbtn.tolov   { background: #0a1a0a; border-color: #1e4a1e; }
+  .pc-kbtn2 {
+    border-radius: 10px; padding: 10px 8px; border: 0.5px solid;
+    display: flex; align-items: center; justify-content: center;
+    gap: 7px; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Outfit', sans-serif; background: none;
+  }
+  .pc-kbtn2:active { opacity: .75; }
+  .pc-kbtn2.pdf  { background: var(--surf2); border-color: #3a2a0a; color: var(--gold); }
+  .pc-kbtn2.add  { background: var(--surf2); border-color: var(--border); color: var(--muted); }
+  .pc-panel-lbl {
+    font-size: 10px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 10px;
+  }
+  .screen.active:not(#s-home) {
+    position: fixed;
+    top: calc(54px + var(--safe-top));
+    left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    max-width: 600px;
+    margin: 0 auto;
+    z-index: 50;
+    background: var(--bg);
+  }
+  .modal { max-width: 520px; border-radius: 20px; margin-bottom: 40px; }
+  .modal-overlay { align-items: center; padding: 20px; }
+  /* PC da mobil headerlarni yashir */
+  .mobile-zavod-hdr, .mobile-klient-hdr { display: none !important; }
+  /* PC da zavod body to'g'ri flex */
+  .pc-zavod-body, .pc-klient-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: block; }
+}
+/* Zavod roli — klient panelini yashir */
+body.rol-zavod #main-klient,
+body.rol-zavod #main-tab-klient { display: none !important; }
+
+/* Mobil da PC headerlarni yashir */
+@media (max-width: 1023px) {
+  .pc-zavod-hdr, .pc-klient-hdr { display: none !important; }
+  .pc-zavod-body { display: block; padding: 0 16px 16px; }
+  .pc-klient-body { display: block; padding: 0 16px 16px; }
+  /* Mobilda main-klient JS boshqaradi (mainTab orqali) */
+}
+
+</style>
+
+</head>
+<body>
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#111;z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#1c1c1c;border:1px solid #333;border-radius:20px;padding:32px 28px;width:100%;max-width:340px;margin:16px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:32px;margin-bottom:8px;">⬡</div>
+      <div style="font-size:20px;font-weight:700;color:#c9a84c;">TILLA HISOB</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;">Kirish</div>
+    </div>
+    <input id="login-user" type="text" placeholder="Login" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px 14px;color:#fff;font-size:15px;margin-bottom:10px;display:block;box-sizing:border-box;" />
+    <input id="login-pass" type="password" placeholder="Parol" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px 14px;color:#fff;font-size:15px;margin-bottom:6px;display:block;box-sizing:border-box;" />
+    <div id="login-err" style="color:#e05a5a;font-size:12px;margin-bottom:10px;text-align:center;min-height:18px;"></div>
+    <button onclick="doLogin()" style="width:100%;background:#c9a84c;color:#111;border-radius:10px;padding:14px;font-size:15px;font-weight:700;border:none;cursor:pointer;">Kirish</button>
+  </div>
+</div>
+<div class="ptr-indicator" id="ptr-indicator">↓</div>
+<div class="topbar">
+  <div class="logo">⬡ TILLA HISOB</div>
+  <div class="topbar-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Tema"><span id="theme-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></button>
+    <button class="theme-btn" onclick="openResetModal()" aria-label="Sozlamalar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="theme-btn" onclick="doLogout()" aria-label="Chiqish"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  </div>
+</div>
+<div class="main-tabs">
+  <div class="main-tab active" id="main-tab-zavod" onclick="mainTab('zavod')">Zavod</div>
+</div>
+
+<!-- HOME -->
+<div class="screen active" id="s-home">
+
+  <!-- ZAVOD PANELI (chap, PC da ko'rinadi) -->
+  <div id="main-zavod">
+    <!-- PC header -->
+    <div class="pc-zavod-hdr">
+      <div class="pc-panel-lbl">Zavodlar</div>
+      <div class="big-stat" style="margin-bottom:10px;">
+        <div class="big-stat-val" id="home-total" style="font-size:28px;">0<span>g</span></div>
+        <div style="height:1px;background:var(--border);margin:10px 0;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><div class="big-stat-label">Bizda</div><div style="font-family:'Roboto',sans-serif;font-size:16px;color:var(--green);font-weight:500;" id="home-bizda">0<span style="font-size:12px;color:var(--muted);margin-left:2px;">g</span></div></div>
+          <div><div class="big-stat-label">Klientda</div><div style="font-family:'Roboto',sans-serif;font-size:16px;color:var(--red);font-weight:500;" id="home-klientda">0<span style="font-size:12px;color:var(--muted);margin-left:2px;">g</span></div></div>
+        </div>
+      </div>
+      <div class="pc-btn-grid3">
+        <button class="pc-zbtn kirim" onclick="goTo('s-kirim')">↓ Kirim</button>
+        <button class="pc-zbtn chiqim" onclick="goTo('s-chiqim')">↑ Chiqim</button>
+        <button class="pc-zbtn vozvrat" onclick="goTo('s-zvozvrat')">↩ Vozvrat</button>
+      </div>
+      <div class="pc-btn-grid2">
+        <button class="pc-zbtn pdf" onclick="openPDFModal(null)">⎙ PDF</button>
+        <button class="pc-zbtn add" onclick="openZavodModal()">+ Zavod</button>
+      </div>
+    </div>
+    <!-- Mobile header (faqat mobilda ko'rinadi) -->
+    <div class="mobile-zavod-hdr" style="position:sticky;top:calc(54px + 40px + var(--safe-top));z-index:98;background:var(--bg);padding:12px 16px 0;border-bottom:1px solid var(--border);">
+      <div class="big-stat" style="margin-bottom:10px;">
+        <div class="big-stat-val" id="home-total-mob" style="font-size:28px;">0<span>g</span></div>
+        <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><div class="big-stat-label">Bizda</div><div style="font-family:'Roboto',sans-serif;font-size:16px;color:var(--green);font-weight:500;" id="home-bizda-mob">0<span style="font-size:12px;color:var(--muted);margin-left:2px;">g</span></div></div>
+          <div><div class="big-stat-label">Klientda</div><div style="font-family:'Roboto',sans-serif;font-size:16px;color:var(--red);font-weight:500;" id="home-klientda-mob">0<span style="font-size:12px;color:var(--muted);margin-left:2px;">g</span></div></div>
+        </div>
+      </div>
+      <div class="big-btn-row" style="margin-bottom:8px;">
+        <div class="big-btn kirim" onclick="goTo('s-kirim')">
+          <div class="big-btn-icon">↓</div>
+          <div class="big-btn-label">Kirim</div>
+          <div class="big-btn-sub">Zavoddan mol olish</div>
+        </div>
+        <div class="big-btn chiqim" onclick="goTo('s-chiqim')">
+          <div class="big-btn-icon">↑</div>
+          <div class="big-btn-label">Chiqim</div>
+          <div class="big-btn-sub">Tolov qilish</div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;flex-direction:row;align-items:center;gap:12px;padding:12px 18px;">
+          <div style="font-size:20px;color:#5ab4e8;">↩</div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:#5ab4e8;">Zavodga vozvrat</div>
+            <div style="font-size:12px;color:var(--muted);">Tilla qaytarish</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <button class="action-btn" onclick="openZavodModal()">+ Zavod</button>
+        <button class="action-btn" onclick="openPDFModal(null)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
+      </div>
+      <div class="nav-tabs" style="margin-bottom:0;border-radius:10px 10px 0 0;">
+        <div class="nav-tab active" id="ztab-home-zavodlar" onclick="homeTab('zavodlar')">Zavodlar</div>
+        <div class="nav-tab" id="ztab-home-hisobot" onclick="homeTab('hisobot')">Hisobot</div>
+      </div>
+    </div>
+    <!-- Zavod roʻyxat body -->
+    <div class="pc-zavod-body">
+      <div id="home-zavodlar"></div>
+      <div id="home-hisobot" style="display:none;"></div>
+      <div class="empty" id="home-empty" style="display:none;"><div class="empty-icon">🏭</div>Hali zavod yoq. "+ Zavod" bosing.</div>
+    </div>
+  </div>
+
+
+
+<!-- ZAVOD DETAIL -->
+<div class="screen" id="s-zavod">
+  <div class="back-row">
+    <button class="back-btn" onclick="goTo('s-home')">←</button>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;">
+      <div class="stitle" id="zavod-title"></div>
+      <button onclick="zavodNomTahrir()" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px 4px;">✎</button>
+    </div>
+    <button onclick="ochirZavod()" style="background:none;border:0.5px solid var(--red);color:var(--red);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;">🗑</button>
+  </div>
+  <div class="big-stat" style="margin-top:0;margin-bottom:10px;">
+    <div class="big-stat-val" id="zavod-total" style="font-size:32px;">0<span>g</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+    <div class="big-btn kirim" onclick="goTo('s-kirim')" style="padding:14px 10px;">
+      <div class="big-btn-icon" style="font-size:20px;">↓</div>
+      <div class="big-btn-label" style="font-size:14px;">Kirim</div>
+    </div>
+    <div class="big-btn chiqim" onclick="goTo('s-chiqim')" style="padding:14px 10px;">
+      <div class="big-btn-icon" style="font-size:20px;">↑</div>
+      <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
+    </div>
+    <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0a121a;border-color:#1e2a4a;padding:14px 10px;">
+      <div class="big-btn-icon" style="font-size:20px;opacity:.8;color:#5ab4e8;">↩</div>
+      <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <button class="action-btn" onclick="openTurModal()">+ Tur</button>
+    <button class="action-btn" onclick="openPDFModal(curZ)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="ztab-turlar" onclick="zTab('turlar')">Turlar</div>
+    <div class="nav-tab" id="ztab-hisobot" onclick="zTab('hisobot')">Hisobot</div>
+  </div>
+  <div id="zavod-turlar-cont">
+    <div id="zavod-tur-list"></div>
+    <div class="empty" id="zavod-tur-empty" style="display:none;"><div class="empty-icon">📦</div>Hali tur yoq.</div>
+  </div>
+  <div id="zavod-hisobot-cont" style="display:none;"></div>
+</div>
+
+<!-- KIRIM -->
+<div class="screen" id="s-kirim">
+  <div class="back-row">
+    <button class="back-btn" onclick="goTo('s-home')">←</button>
+    <div class="stitle">Kirim</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Zavod</div>
+    <div class="field"><select id="k-zavod" onchange="kZavodChange()"><option value="">— Tanlang —</option></select></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Sana</div>
+    <div class="field" style="margin:0;"><input type="date" id="k-sana" style="font-size:16px;"></div>
+  </div>
+  <div class="card" id="k-turlar-card" style="display:none;">
+    <div class="card-title">Turlar — gramm kiriting</div>
+    <div id="k-turlar-inputs"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" onclick="goTo('s-home')">Bekor</button>
+    <button class="btn gold" onclick="kirimSaqlash()">✓ Saqlash</button>
+  </div>
+</div>
+
+<!-- ZAVOD VOZVRAT -->
+<div class="screen" id="s-zvozvrat">
+  <div class="back-row">
+    <button class="back-btn" onclick="goTo('s-home')">←</button>
+    <div class="stitle">Zavodga vozvrat</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Zavod</div>
+    <div class="field"><select id="zv-zavod" onchange="zvZavodChange()" style="font-size:16px;"><option value="">— Tanlang —</option></select></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Sana</div>
+    <div class="field" style="margin:0;"><input type="date" id="zv-sana" style="font-size:16px;"></div>
+  </div>
+  <div class="card" id="zv-turlar-card" style="display:none;">
+    <div class="card-title">Turlar — gramm kiriting</div>
+    <div id="zv-turlar-inputs"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" onclick="goTo('s-home')">Bekor</button>
+    <button class="btn" style="background:#0f1a1f;color:#5ab4e8;border-color:#1e3a4a;" onclick="zvSaqlash()">✓ Saqlash</button>
+  </div>
+</div>
+
+<!-- CHIQIM -->
+<div class="screen" id="s-chiqim">
+  <div class="back-row">
+    <button class="back-btn" onclick="goTo('s-home')">←</button>
+    <div class="stitle">Chiqim</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Zavod</div>
+    <div class="field"><select id="c-zavod" onchange="cZavodChange()"><option value="">— Tanlang —</option></select></div>
+  </div>
+  <div class="card" id="c-kimga-card" style="display:none;">
+    <div class="card-title">Kimga va sana</div>
+    <div id="c-kimga-list" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="c-kimga-yangi" placeholder="Yangi ism..." style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;background:var(--surf2);color:var(--text);">
+      <button onclick="kimgaQosh()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surf2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;">+ Qo'sh</button>
+    </div>
+    <input type="hidden" id="c-kimga" value="">
+    <div class="field"><label>Sana</label><input type="date" id="c-sana" style="font-size:16px;"></div>
+  </div>
+  <div class="card" id="c-turlar-card" style="display:none;">
+    <div class="card-title">Turlar — tolov kiriting</div>
+    <div id="c-turlar-inputs"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn" onclick="goTo('s-home')">Bekor</button>
+    <button class="btn ok" onclick="chiqimSaqlash()">✓ Saqlash</button>
+  </div>
+</div>
+
+
+
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-zavod">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Zavod qoshish</div>
+    <div class="field"><label>Nomi</label><input type="text" id="zavod-nom" placeholder="Butterfly" maxlength="50"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeModal('modal-zavod')">Bekor</button>
+      <button class="btn gold" onclick="saqlashZavod()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-tur">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="tur-modal-title">Tur qoshish</div>
+    <div class="field"><label>Nomi</label><input type="text" id="tur-nom" placeholder="Oddiy / 3D / 3DS..." maxlength="40"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeModal('modal-tur')">Bekor</button>
+      <button class="btn gold" onclick="saqlashTur()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-title">Tahrirlash</div>
+    <div id="edit-body"></div>
+    <div id="edit-log" style="font-size:11px;color:var(--muted);margin-top:8px;padding:6px 10px;background:var(--surf2);border-radius:8px;display:none;"></div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn" style="color:var(--red);border-color:var(--red);" onclick="editOchir()">🗑 Ochir</button>
+      <button class="btn" onclick="closeModal('modal-edit')">Bekor</button>
+      <button class="btn gold" onclick="editSaqla()">✓ Saqlash</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-pdf">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">PDF — Davr tanlang</div>
+    <button class="davr-btn" onclick="pdfDavrTanla('hammasi')">Hammasi</button>
+    <button class="davr-btn" onclick="pdfDavrTanla('oylik')">Bu oy</button>
+    <button class="davr-btn" onclick="pdfDavrTanla('haftalik')">Bu hafta</button>
+    <div class="davr-date-row">
+      <div style="flex:1;"><div style="font-size:11px;color:var(--muted);margin-bottom:5px;">DAN</div>
+      <input type="date" id="pdf-dan" style="width:100%;padding:9px;border-radius:9px;border:1.5px solid var(--border);background:var(--surf);color:var(--text);font-size:14px;"></div>
+      <div style="flex:1;"><div style="font-size:11px;color:var(--muted);margin-bottom:5px;">GACHA</div>
+      <input type="date" id="pdf-gacha" style="width:100%;padding:9px;border-radius:9px;border:1.5px solid var(--border);background:var(--surf);color:var(--text);font-size:14px;"></div>
+      <button class="btn gold" onclick="pdfDavrTanla('custom')" style="flex:none;padding:9px 14px;margin-top:14px;">OK</button>
+    </div>
+    <button class="davr-btn" onclick="closeModal('modal-pdf')" style="color:var(--muted);">Bekor</button>
+  </div>
+</div>
+
+
+
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Sozlamalar</div>
+    <button class="davr-btn" onclick="cacheOchir()">🗑 Kesh tozalash</button>
+    <button class="davr-btn" onclick="resetTasdiqlash()" style="color:var(--red);border-color:var(--red);">⚠ Barcha malumotni ochirish</button>
+    <button class="davr-btn" onclick="closeModal('modal-reset')" style="color:var(--muted);">Bekor</button>
+  </div>
+</div>
+
+<script>
+// LOGIN
+var CREDS = [
+  {login:'tilla', parol:'tilla9999', rol:'admin'},
+  {login:'zavod', parol:'zavod9999', rol:'zavod'}
+];
+function setAuth(rol){ localStorage.setItem('tilla-auth','1'); localStorage.setItem('tilla-rol',rol); document.cookie='tilla-auth=1;max-age=31536000;path=/'; }
+function getAuth(){ return localStorage.getItem('tilla-auth') || document.cookie.indexOf('tilla-auth=1')>=0; }
+function getRol(){ return localStorage.getItem('tilla-rol')||'admin'; }
+function applyRol(){
+  var rol=getRol();
+  if(rol==='zavod'){
+    document.body.classList.add('rol-zavod');
+  } else {
+    document.body.classList.remove('rol-zavod');
+  }
+}
+function doLogin(){
+  var u=document.getElementById('login-user').value.trim();
+  var p=document.getElementById('login-pass').value;
+  var found=CREDS.find(function(c){return c.login===u&&c.parol===p;});
+  if(found){ setAuth(found.rol); document.getElementById('login-screen').style.display='none'; applyRol(); }
+  else { document.getElementById('login-err').textContent='Login yoki parol xato!'; }
+}
+(function(){
+  if(!getAuth()){ document.getElementById('login-screen').style.display='flex'; }
+  document.addEventListener('DOMContentLoaded', function(){
+    var lp=document.getElementById('login-pass');
+    var lu=document.getElementById('login-user');
+    if(lp) lp.addEventListener('keydown',function(e){if(e.key==='Enter') doLogin();});
+    if(lu) lu.addEventListener('keydown',function(e){if(e.key==='Enter'&&lp) lp.focus();});
+  });
+})();
+
+// ── DATA (faqat localStorage) ─────────────────────────────────────────────────
+var data = JSON.parse(localStorage.getItem('tilla-v2') || '{"zavodlar":[],"klientlar":[]}');
+if (!data.klientlar) data.klientlar = [];
+if (!data.zavodlar) data.zavodlar = [];
+
+function save(logText) {
+  localStorage.setItem('tilla-v2', JSON.stringify(data));
+}
+
+
+function parseNum(v) { if (!v && v !== 0) return 0; return parseFloat(String(v).replace(/,/g, '.')) || 0; }
+function fmtG(g) { var v=parseFloat(g); return (v<0?'-':'')+Math.abs(v).toFixed(2); }
+function fmtD(d) { return parseFloat(d).toLocaleString('en-US', {maximumFractionDigits:2}); }
+function today() { return new Date().toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'}); }
+function roundG(v) { var t = Math.floor(v * 1000) % 10; return t >= 5 ? Math.ceil(v*100)/100 : Math.floor(v*100)/100; }
+function nowDate() { var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+var curZ = -1, openTurIdx = -1, curHomeTab = 'zavodlar', curZTab = 'turlar';
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  if (id === 's-home') renderHome();
+  if (id === 's-zavod') renderZavod();
+  if (id === 's-kirim') initKirim();
+  if (id === 's-zvozvrat') zvInit();
+  if (id === 's-chiqim') initChiqim();
+}
+
+function mainTab(tab) {
+  var mtz=document.getElementById('main-tab-zavod'); if(mtz) mtz.classList.toggle('active', tab === 'zavod');
+  var mtz2=document.getElementById('main-zavod'); if(mtz2) mtz2.style.display = tab === 'zavod' ? 'block' : 'none';
+  if (tab === 'zavod') renderHome();
+}
+
+function homeTab(tab) {
+  curHomeTab = tab;
+  document.getElementById('ztab-home-zavodlar').classList.toggle('active', tab === 'zavodlar');
+  document.getElementById('ztab-home-hisobot').classList.toggle('active', tab === 'hisobot');
+  document.getElementById('home-zavodlar').style.display = tab === 'zavodlar' ? 'block' : 'none';
+  document.getElementById('home-hisobot').style.display = tab === 'hisobot' ? 'block' : 'none';
+  if (tab === 'hisobot') renderHisobot();
+}
+
+function zTab(tab) {
+  curZTab = tab;
+  document.getElementById('ztab-turlar').classList.toggle('active', tab === 'turlar');
+  document.getElementById('ztab-hisobot').classList.toggle('active', tab === 'hisobot');
+  document.getElementById('zavod-turlar-cont').style.display = tab === 'turlar' ? 'block' : 'none';
+  document.getElementById('zavod-hisobot-cont').style.display = tab === 'hisobot' ? 'block' : 'none';
+  if (tab === 'hisobot') renderZavodHisobot();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── RENDER HOME ───────────────────────────────────────────────────────────────
+function renderHome() {
+  // Bizda: zavodlar ostatka
+  var bizda = 0;
+  data.zavodlar.forEach(function(z){ z.turlar.forEach(function(t){ bizda += t.ostatka; }); });
+  var klientda = 0;
+  var tot = Math.round(bizda*100)/100;
+  var g = '<span>g</span>';
+  var sg = '<span style="font-size:12px;color:var(--muted);margin-left:2px;">g</span>';
+  document.getElementById('home-total').innerHTML = fmtG(tot)+g;
+  var bd=document.getElementById('home-bizda'); if(bd) bd.innerHTML=fmtG(bizda)+sg;
+
+  var mob=document.getElementById('home-total-mob'); if(mob) mob.innerHTML=fmtG(tot)+g;
+  var bdm=document.getElementById('home-bizda-mob'); if(bdm) bdm.innerHTML=fmtG(bizda)+sg;
+
+  var list = document.getElementById('home-zavodlar');
+  var empty = document.getElementById('home-empty');
+  if (!data.zavodlar.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  var out = '';
+  data.zavodlar.forEach(function(z, zi) {
+    var zG = 0; z.turlar.forEach(function(t){ zG += t.ostatka; });
+    out += '<div class="zrow" onclick="openZavod(' + zi + ')">'
+      + '<div><div class="zrow-name">' + z.nom + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">' + z.turlar.length + ' ta tur</div></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div class="zrow-g" style="color:'+(zG<0?'var(--green)':'var(--red)')+'">' + fmtG(zG) + ' g</div>'
+      + '<div style="color:var(--muted);">›</div></div></div>';
+  });
+  list.innerHTML = out;
+  if (curHomeTab === 'hisobot') renderHisobot();
+}
+
+function openZavod(zi) { curZ = zi; openTurIdx = -1; curZTab = 'turlar'; goTo('s-zavod'); renderZavod(); }
+
+// ── HISOBOT ───────────────────────────────────────────────────────────────────
+function renderHisobot() {
+  var cont = document.getElementById('home-hisobot');
+  var allOps = [];
+  data.zavodlar.forEach(function(z) {
+    z.turlar.forEach(function(t) {
+      t.tarix.forEach(function(op) { allOps.push({zavod:z.nom, tur:t.nom, op:op}); });
+    });
+  });
+  if (!allOps.length) { cont.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Hali kirim yoki chiqim yoq.</div>'; return; }
+  var groups = {}, groupOrder = [];
+  allOps.forEach(function(item) {
+    var op = item.op;
+    var key = op.tip + '|' + (op.kimga||'') + '|' + item.zavod + '|' + op.sana;
+    if (!groups[key]) { groups[key] = {tip:op.tip, kimga:op.kimga||'', zavod:item.zavod, sana:op.sana, turlar:[]}; groupOrder.push(key); }
+    groups[key].turlar.push(item);
+  });
+  groupOrder.sort(function(a,b){ return groups[b].sana.localeCompare(groups[a].sana); });
+  var expanded = {};
+  function render() {
+    var out = '';
+    groupOrder.forEach(function(key, idx) {
+      var g = groups[key], isK = g.tip === 'mol', isV = g.tip === 'vozvrat', isOpen = expanded[idx];
+      var bc = isK ? 'var(--green)' : isV ? '#5ab4e8' : 'var(--red)';
+      var jamiG = 0;
+      g.turlar.forEach(function(item){ if(item.op.tip==='mol'||item.op.tip==='vozvrat') jamiG+=item.op.gramm; else jamiG+=(item.op.jami||0); });
+      jamiG = Math.round(jamiG*100)/100;
+      bc = isK ? (jamiG<0?'var(--green)':'var(--red)') : (isV?'#5ab4e8':'var(--red)');
+      out += '<div class="hrow" style="border-left:3px solid ' + bc + ';cursor:pointer;margin-bottom:8px;" onclick="toggleHrow(' + idx + ')">';
+      out += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      out += '<div><div style="font-size:15px;font-weight:700;color:' + bc + ';">' + (isK ? '↓ Kirim' : isV ? '↩ Vozvrat' : '↑ Chiqim') + '</div>';
+      out += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">' + g.zavod + ' · ' + g.sana + '</div></div>';
+      out += '<div style="font-family:Roboto,sans-serif;font-size:16px;font-weight:600;color:' + bc + ';">' + fmtG(jamiG) + ' g</div>';
+      out += '</div>';
+      if (isOpen) {
+        out += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">';
+        if (!isK && g.kimga) out += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Kimga: <b style="color:var(--text);">' + g.kimga + '</b></div>';
+        g.turlar.forEach(function(item, ti) {
+          var op = item.op;
+          if (ti > 0) out += '<div style="height:1px;background:var(--border);margin:10px 0;"></div>';
+          var gzi=-1, gti=-1, goi=-1;
+          data.zavodlar.forEach(function(z,zi){ if(z.nom===item.zavod){ gzi=zi; z.turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; t.tarix.forEach(function(o,oi){ if(o===op) goi=oi; }); } }); } });
+          out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">';
+          out += '<div style="font-size:13px;font-weight:600;color:var(--text);">' + item.tur + '</div>';
+          out += '<button onclick="event.stopPropagation();openEditModal(' + gzi + ',' + gti + ',' + goi + ')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
+          out += '</div>';
+          if (isK) {
+            out += '<div style="font-size:12px;color:var(--green);">+' + fmtG(op.gramm) + ' g</div>';
+          } else if (op.tip === 'vozvrat') {
+            out += '<div style="font-size:12px;color:#5ab4e8;">−' + fmtG(op.gramm) + ' g</div>';
+          } else {
+            if (op.naqtSumma>0&&op.naqtKurs>0) out += '<div style="font-size:12px;color:var(--muted);">naqt: ' + fmtD(op.naqtSumma) + '$ / ' + op.naqtKurs + '$/g = <b style="color:var(--text);">' + fmtG(op.naqtGramm) + 'g</b></div>';
+            if (op.lomGramm>0&&op.lomKurs>0) out += '<div style="font-size:12px;color:var(--muted);">lom: ' + fmtG(op.lomGramm) + 'g × ' + op.lomKurs + '$/g = ' + fmtD(op.lomPul) + '$' + (op.naqtKurs>0?' / ' + op.naqtKurs + '$/g = <b style="color:var(--text);">' + fmtG(Math.round(op.lomPul/op.naqtKurs*100)/100) + 'g</b>':'') + '</div>';
+            out += '<div style="font-size:12px;color:var(--red);margin-top:3px;font-weight:600;">jami: −' + fmtG(op.jami) + ' g</div>';
+          }
+        });
+        out += '</div>';
+      }
+      out += '</div>';
+    });
+    cont.innerHTML = out;
+  }
+  window.toggleHrow = function(idx) { expanded[idx] = !expanded[idx]; render(); };
+  render();
+}
+
+// ── ZAVOD DETAIL ──────────────────────────────────────────────────────────────
+function renderZavod() {
+  var z = data.zavodlar[curZ];
+  if (!z) return;
+  document.getElementById('zavod-title').textContent = z.nom;
+  var bizda = 0; z.turlar.forEach(function(t){ bizda += t.ostatka; });
+  var zG = Math.round(bizda*100)/100;
+  var g='<span>g</span>';
+  var sg='<span style="font-size:11px;color:var(--muted);margin-left:2px;">g</span>';
+  document.getElementById('zavod-total').innerHTML = fmtG(zG)+g;
+
+  var list = document.getElementById('zavod-tur-list');
+  var empty = document.getElementById('zavod-tur-empty');
+  if (!z.turlar.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  var out = '';
+  z.turlar.forEach(function(t, ti) {
+    var totalK = 0, totalC = 0;
+    t.tarix.forEach(function(op){ if (op.tip==='mol') totalK+=op.gramm; else if(op.tip==='vozvrat') totalC+=op.gramm; else totalC+=op.jami||0; });
+
+    // Shu tur bo'yicha klientlar qarzi
+    var turKlientlar = {};
+    (data.klientlar||[]).forEach(function(k){
+      var q = 0;
+      k.tarix.forEach(function(op){
+        if(op.zavod !== z.nom || op.tur !== t.nom) return;
+        if(op.tip==='berish') q+=op.gramm;
+        else if(op.tip==='vozvrat') q-=op.gramm;
+        else if(op.tip==='tolov') q-=(op.ekvivalent||0);
+      });
+      q = Math.round(q*100)/100;
+      if(q > 0.001) turKlientlar[k.nom] = q;
+    });
+    var turKlientda = Object.values(turKlientlar).reduce(function(a,b){return a+b;},0);
+    turKlientda = Math.round(turKlientda*100)/100;
+    var turBizda = t.ostatka;
+    var turJami = Math.round((turBizda+turKlientda)*100)/100;
+
+    var isOpen = openTurIdx === ti;
+    var rows = '';
+    t.tarix.slice().reverse().forEach(function(op) {
+      if (op.tip === 'mol') {
+        rows += '<div class="trow"><div><span style="color:var(--green);">+ Kirim</span><div class="trow-info">' + op.sana + '</div></div><span style="font-family:Roboto,sans-serif;color:var(--green);">+' + fmtG(op.gramm) + 'g</span></div>';
+      } else if (op.tip === 'vozvrat') {
+        rows += '<div class="trow"><div><span style="color:var(--red);">↩ Vozvrat</span><div class="trow-info">' + op.sana + '</div></div><span style="font-family:Roboto,sans-serif;color:var(--red);">-' + fmtG(op.gramm) + 'g</span></div>';
+      } else {
+        rows += '<div class="trow"><div><span style="color:var(--red);">- Chiqim</span>' + (op.kimga?'<span style="color:var(--muted);margin-left:6px;font-size:11px;">'+op.kimga+'</span>':'') + '<div class="trow-info">' + op.sana + '</div></div><span style="font-family:Roboto,sans-serif;color:var(--red);">-' + fmtG(op.jami) + 'g</span></div>';
+      }
+    });
+
+    // Klientlar ro'yxati (faqat qarzi borlar)
+    var klientRows = '';
+    Object.keys(turKlientlar).forEach(function(nom){
+      klientRows += '<div class="trow">'
+        + '<div style="font-size:13px;color:var(--text);">'+nom+'</div>'
+        + '<span style="font-family:Roboto,sans-serif;font-size:13px;color:var(--red);font-weight:500;">-'+fmtG(turKlientlar[nom])+'g</span>'
+        + '</div>';
+    });
+
+    out += '<div class="tacc' + (isOpen?' open':'') + '">'
+      + '<div class="tacc-head" onclick="toggleTur(' + ti + ')">'
+      + '<div class="tacc-name">' + t.nom + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<div class="tacc-g">' + fmtG(turJami) + ' g</div>'
+      + '<button onclick="event.stopPropagation();turNomTahrir('+ti+')" style="background:none;border:0.5px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;">✎</button>'
+      + '<button onclick="event.stopPropagation();ochirTur('+ti+')" style="background:none;border:0.5px solid var(--red);color:var(--red);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;">✕</button>'
+      + '<div style="color:var(--muted);font-size:14px;">' + (isOpen?'⌄':'›') + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="tacc-body">'
+      // Bizda / Klientda / Jami 3 ta stat
+      + '<div class="stat2" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:10px;">'
+      + '<div class="stat2-item"><div class="stat2-label">BIZDA</div><div style="font-family:Roboto,sans-serif;font-size:14px;font-weight:500;color:var(--green);">'+fmtG(turBizda)+'g</div></div>'
+      + '<div class="stat2-item"><div class="stat2-label">KLIENTDA</div><div style="font-family:Roboto,sans-serif;font-size:14px;font-weight:500;color:var(--red);">'+fmtG(turKlientda)+'g</div></div>'
+      + '<div class="stat2-item"><div class="stat2-label">JAMI</div><div style="font-family:Roboto,sans-serif;font-size:14px;font-weight:500;color:var(--gold);">'+fmtG(turJami)+'g</div></div>'
+      + '</div>'
+      // Klientlar ro'yxati
+      + (klientRows ? '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Klientlarda</div>' + klientRows + '<div style="height:1px;background:var(--border);margin:10px 0;"></div>' : '')
+      // Tarix
+      + (rows || '<div style="text-align:center;padding:12px;color:var(--muted);font-size:12px;">Tarix yoq</div>')
+      + '</div></div>';
+  });
+  list.innerHTML = out;
+}
+
+function toggleTur(ti) { openTurIdx = openTurIdx === ti ? -1 : ti; renderZavod(); }
+
+function turNomTahrir(ti) {
+  var z = data.zavodlar[curZ];
+  var t = z.turlar[ti];
+  var yangiNom = prompt("Tur nomini o'zgartiring:", t.nom);
+  if (yangiNom === null) return;
+  yangiNom = yangiNom.trim();
+  if (!yangiNom) { alert("Nom bo'sh bo'lishi mumkin emas!"); return; }
+  t.nom = yangiNom;
+  save();
+  renderZavod();
+}
+
+function ochirTur(ti) {
+  var z = data.zavodlar[curZ];
+  var t = z.turlar[ti];
+  if (!confirm('"' + t.nom + '" turini ochirmoqchimisiz?')) return;
+  if (!confirm("Haqiqatan ham? Barcha tarix ochib ketadi!")) return;
+  z.turlar.splice(ti, 1);
+  openTurIdx = -1;
+  save();
+  renderZavod();
+}
+
+function zavodNomTahrir() {
+  var z = data.zavodlar[curZ];
+  if (!z) return;
+  var yangi = prompt("Zavod nomini o'zgartiring:", z.nom);
+  if (yangi === null) return;
+  yangi = yangi.trim();
+  if (!yangi) { alert("Nom bo'sh bo'lishi mumkin emas!"); return; }
+  z.nom = yangi;
+  save();
+  document.getElementById('zavod-title').textContent = yangi;
+  renderHome();
+}
+
+function ochirZavod() {
+  var z = data.zavodlar[curZ];
+  if (!z) return;
+  if (!confirm(z.nom + " zavodini ochirmoqchimisiz?")) return;
+  if (!confirm("Haqiqatan ham? Barcha turlar va tarix ochib ketadi!")) return;
+  data.zavodlar.splice(curZ, 1);
+  save();
+  goTo('s-home');
+  renderHome();
+}
+
+function renderZavodHisobot() {
+  var z = data.zavodlar[curZ];
+  var cont = document.getElementById('zavod-hisobot-cont');
+  var allOps = [];
+  z.turlar.forEach(function(t){ t.tarix.forEach(function(op){ allOps.push({tur:t.nom, op:op}); }); });
+  if (!allOps.length) { cont.innerHTML = '<div class="empty">Hali tarix yoq.</div>'; return; }
+  var groups = {}, groupOrder = [];
+  allOps.forEach(function(item) {
+    var op = item.op;
+    var key = op.tip + '|' + (op.kimga||'') + '|' + op.sana;
+    if (!groups[key]) { groups[key] = {tip:op.tip, kimga:op.kimga||'', sana:op.sana, turlar:[]}; groupOrder.push(key); }
+    groups[key].turlar.push(item);
+  });
+  groupOrder.sort(function(a,b){ return groups[b].sana.localeCompare(groups[a].sana); });
+  var zExp = {};
+  function renderZH() {
+    var out = '';
+    groupOrder.forEach(function(key, idx) {
+      var g = groups[key], isK = g.tip === 'mol', isOpen = zExp[idx];
+      var isK = g.tip === 'mol'; var isV2 = g.tip === 'vozvrat'; var bc = isK ? 'var(--red)' : 'var(--green)';
+      var jamiG = 0;
+      g.turlar.forEach(function(item){ if(item.op.tip==='mol'||item.op.tip==='vozvrat') jamiG+=item.op.gramm; else jamiG+=(item.op.jami||0); });
+      jamiG = Math.round(jamiG*100)/100;
+      bc = isK ? 'var(--red)' : (isV2 ? '#5ab4e8' : 'var(--green)');
+      out += '<div class="hrow" style="border-left:3px solid ' + bc + ';cursor:pointer;margin-bottom:8px;" onclick="toggleZH(' + idx + ')">';
+      out += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      out += '<div><div style="font-size:15px;font-weight:700;color:' + bc + ';">' + (isK?'↓ Kirim':g.tip==='vozvrat'?'↩ Vozvrat':'↑ Chiqim') + '</div>';
+      out += '<div style="font-size:13px;color:var(--text);margin-top:2px;">' + g.sana + '</div></div>';
+      out += '<div style="font-family:Roboto,sans-serif;font-size:16px;font-weight:600;color:' + bc + ';">' + fmtG(jamiG) + ' g</div></div>';
+      if (isOpen) {
+        out += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">';
+        g.turlar.forEach(function(item, ti) {
+          var op = item.op;
+          if (ti > 0) out += '<div style="height:1px;background:var(--border);margin:8px 0;"></div>';
+          var gti=-1, goi=-1;
+          data.zavodlar[curZ].turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; t.tarix.forEach(function(o,oi){ if(o===op) goi=oi; }); } });
+          out += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+          out += '<div style="font-size:13px;font-weight:600;color:var(--text);">' + item.tur + '</div>';
+          out += '<button onclick="event.stopPropagation();openEditModal(' + curZ + ',' + gti + ',' + goi + ')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
+          out += '</div>';
+          if (isK) out += '<div style="font-size:12px;color:var(--green);">+' + fmtG(op.gramm) + ' g</div>';
+          else out += '<div style="font-size:12px;color:var(--red);font-weight:600;">jami: −' + fmtG(op.jami) + ' g</div>';
+        });
+        out += '</div>';
+      }
+      out += '</div>';
+    });
+    cont.innerHTML = out;
+  }
+  window.toggleZH = function(idx){ zExp[idx]=!zExp[idx]; renderZH(); };
+  renderZH();
+}
+
+// ── KIRIM ─────────────────────────────────────────────────────────────────────
+function initKirim() {
+  document.getElementById('k-sana').value = nowDate();
+  var sel = document.getElementById('k-zavod');
+  sel.innerHTML = '<option value="">— Tanlang —</option>';
+  data.zavodlar.forEach(function(z,i){ sel.innerHTML += '<option value="'+i+'">'+z.nom+'</option>'; });
+  sel.value = '';
+  document.getElementById('k-turlar-card').style.display = 'none';
+  document.getElementById('k-turlar-inputs').innerHTML = '';
+}
+function kZavodChange() {
+  var zi = parseInt(document.getElementById('k-zavod').value);
+  var card = document.getElementById('k-turlar-card');
+  if (isNaN(zi)||!data.zavodlar[zi]||!data.zavodlar[zi].turlar.length) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  var out = '';
+  data.zavodlar[zi].turlar.forEach(function(t,ti) {
+    out += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+      + '<div style="font-size:14px;font-weight:600;min-width:70px;color:var(--text);">'+t.nom+'</div>'
+      + '<input type="number" id="kg-'+ti+'" placeholder="0" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;background:var(--surf2);color:var(--text);">'
+      + '<span style="font-size:13px;color:var(--muted);">g</span></div>';
+  });
+  document.getElementById('k-turlar-inputs').innerHTML = out;
+}
+function kirimSaqlash() {
+  var zi = parseInt(document.getElementById('k-zavod').value);
+  if (isNaN(zi)) { alert('Zavod tanlang!'); return; }
+  var z = data.zavodlar[zi];
+  var sanaEl = document.getElementById('k-sana');
+  var sana = sanaEl&&sanaEl.value ? sanaEl.value.split('-').reverse().join('.') : today();
+  var any = false;
+  z.turlar.forEach(function(t,ti) {
+    var el = document.getElementById('kg-'+ti);
+    var g = el ? parseNum(el.value) : 0;
+    if (g > 0) {
+      t.ostatka += g;
+      t.tarix.push({tip:'mol', sana:sana, gramm:g});
+      any = true;
+    } else if (g < 0) {
+      // Minus — zavoddan chiqim (qarz)
+      t.ostatka = Math.round((t.ostatka + g)*100)/100;
+      t.tarix.push({tip:'mol', sana:sana, gramm:g});
+      any = true;
+    }
+  });
+  if (!any) { alert('Kamida 1 ta turga gramm kiriting!'); return; }
+  save('Kirim | '+z.nom+' | '+sana);
+  goTo('s-home');
+}
+
+// ── CHIQIM ────────────────────────────────────────────────────────────────────
+// Kimgalar ro'yxati — zavod bo'yicha
+var _kimgaZavod = ''; // hozirgi zavod nomi
+var kimgalar = [];
+
+function kimgaZavodSet(znom) {
+  _kimgaZavod = znom;
+  var all = JSON.parse(localStorage.getItem('tilla-kimgalar-v2') || '{}');
+  kimgalar = all[znom] || [];
+}
+
+function kimgaSaqla() {
+  var all = JSON.parse(localStorage.getItem('tilla-kimgalar-v2') || '{}');
+  all[_kimgaZavod] = kimgalar;
+  localStorage.setItem('tilla-kimgalar-v2', JSON.stringify(all));
+}
+
+function kimgaRender() {
+  var cont = document.getElementById('c-kimga-list');
+  if (!cont) return;
+  var sel = document.getElementById('c-kimga').value;
+  var html = '';
+  kimgalar.forEach(function(nom, i) {
+    var isActive = sel === nom;
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;border:1.5px solid '+(isActive?'var(--gold)':'var(--border)')+';margin-bottom:6px;cursor:pointer;background:var(--surf2);" onclick="kimgaTanla('+i+')">';
+    html += '<div style="flex:1;font-size:14px;font-weight:'+(isActive?'600':'400')+';color:var(--text);">'+nom+(isActive?' ✓':'')+'</div>';
+    html += '<button onclick="event.stopPropagation();kimgaOchir('+i+')" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px;">✕</button>';
+    html += '</div>';
+  });
+  cont.innerHTML = html;
+}
+
+function kimgaTanla(i) {
+  document.getElementById('c-kimga').value = kimgalar[i];
+  kimgaRender();
+}
+
+function kimgaQosh() {
+  var el = document.getElementById('c-kimga-yangi');
+  var nom = el.value.trim();
+  if (!nom) return;
+  if (!kimgalar.includes(nom)) { kimgalar.push(nom); kimgaSaqla(); }
+  document.getElementById('c-kimga').value = nom;
+  el.value = '';
+  kimgaRender();
+}
+
+function kimgaOchir(i) {
+  if (!confirm(kimgalar[i]+" ni ochirasizmi?")) return;
+  if (document.getElementById('c-kimga').value === kimgalar[i]) document.getElementById('c-kimga').value = '';
+  kimgalar.splice(i, 1);
+  kimgaSaqla();
+  kimgaRender();
+}
+
+function initChiqim() {
+  var sanaEl = document.getElementById('c-sana');
+  if (sanaEl) sanaEl.value = nowDate();
+  var sel = document.getElementById('c-zavod');
+  sel.innerHTML = '<option value="">— Tanlang —</option>';
+  data.zavodlar.forEach(function(z,i){ sel.innerHTML += '<option value="'+i+'">'+z.nom+'</option>'; });
+  document.getElementById('c-turlar-card').style.display = 'none';
+  document.getElementById('c-kimga-card').style.display = 'none';
+  document.getElementById('c-kimga').value = ''; document.getElementById('c-kimga-yangi') && (document.getElementById('c-kimga-yangi').value = '');
+}
+function cZavodChange() {
+  var zi = parseInt(document.getElementById('c-zavod').value);
+  var card = document.getElementById('c-turlar-card');
+  var kcard = document.getElementById('c-kimga-card');
+  if (isNaN(zi)||!data.zavodlar[zi]||!data.zavodlar[zi].turlar.length) { card.style.display='none'; kcard.style.display='none'; return; }
+  var znom = data.zavodlar[zi].nom;
+  kimgaZavodSet(znom);
+  kcard.style.display = 'block'; card.style.display = 'block'; kimgaRender();
+  var out = '';
+  data.zavodlar[zi].turlar.forEach(function(t,ti) {
+    out += '<div class="ctur-block">'
+      + '<div class="ctur-header"><span class="ctur-name">'+t.nom+'</span><span class="ctur-bal">'+fmtG(t.ostatka)+' g</span></div>'
+      + '<div class="ctur-grid">'
+      + '<div class="ctur-field"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;">NAQT ($)</div><input type="number" id="cn-n-'+ti+'" placeholder="0" oninput="cCalc('+ti+')"></div>'
+      + '<div class="ctur-field"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;">KURS ($/g)</div><input type="number" id="cn-k-'+ti+'" placeholder="87.5" oninput="cCalc('+ti+')"></div>'
+      + '<div class="ctur-field"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;">LOM (g)</div><input type="number" id="cn-l-'+ti+'" placeholder="0" oninput="cCalc('+ti+')"></div>'
+      + '<div class="ctur-field"><div style="font-size:10px;color:var(--muted);margin-bottom:4px;">LOM KURSI ($/g)</div><input type="number" id="cn-lk-'+ti+'" placeholder="87.5" oninput="cCalc('+ti+')"></div>'
+      + '</div><div id="cn-res-'+ti+'" style="margin-top:8px;font-size:12px;color:var(--muted);background:var(--surf2);border-radius:8px;padding:8px;border-left:2px solid var(--gold);display:none;"></div>'
+      + '</div>';
+  });
+  document.getElementById('c-turlar-inputs').innerHTML = out;
+}
+function cCalc(ti) {
+  var nS=parseNum(document.getElementById('cn-n-'+ti).value)||0;
+  var nK=parseNum(document.getElementById('cn-k-'+ti).value)||0;
+  var lG=parseNum(document.getElementById('cn-l-'+ti).value)||0;
+  var lK=parseNum(document.getElementById('cn-lk-'+ti).value)||0;
+  var res=document.getElementById('cn-res-'+ti);
+  var lines=[];
+  if (nS>0&&nK>0) lines.push('naqt: '+fmtD(nS)+'$ / '+nK+'$/g = <b style="color:var(--green);">'+fmtG(roundG(nS/nK))+'g</b>');
+  if (lG>0&&lK>0) { var lPul=lG*lK; lines.push('lom: '+fmtG(lG)+'g x '+lK+'$/g = '+fmtD(lPul)+'$'+(nK>0?' / '+nK+'$/g = <b style="color:var(--green);">'+fmtG(roundG(lPul/nK))+'g</b>':'')); }
+  if (lines.length) { res.innerHTML=lines.join('<br>'); res.style.display='block'; } else res.style.display='none';
+}
+function chiqimSaqlash() {
+  var zi = parseInt(document.getElementById('c-zavod').value);
+  if (isNaN(zi)) { alert('Zavod tanlang!'); return; }
+  var z = data.zavodlar[zi];
+  var kimga = document.getElementById('c-kimga').value.trim();
+  var csEl = document.getElementById('c-sana');
+  var sana = csEl&&csEl.value ? csEl.value.split('-').reverse().join('.') : today();
+  for (var ti=0; ti<z.turlar.length; ti++) {
+    var nS=parseNum(document.getElementById('cn-n-'+ti).value)||0;
+    var nK=parseNum(document.getElementById('cn-k-'+ti).value)||0;
+    var lG=parseNum(document.getElementById('cn-l-'+ti).value)||0;
+    var lK=parseNum(document.getElementById('cn-lk-'+ti).value)||0;
+    if (!nS&&!lG) continue;
+    if (nS>0&&!nK) { alert(z.turlar[ti].nom+' uchun naqt kursi kiriting!'); return; }
+    if (lG>0&&!lK) { alert(z.turlar[ti].nom+' uchun lom kursi kiriting!'); return; }
+  }
+  var any = false;
+  for (var ti=0; ti<z.turlar.length; ti++) {
+    var t=z.turlar[ti];
+    var nS=parseNum(document.getElementById('cn-n-'+ti).value)||0;
+    var nK=parseNum(document.getElementById('cn-k-'+ti).value)||0;
+    var lG=parseNum(document.getElementById('cn-l-'+ti).value)||0;
+    var lK=parseNum(document.getElementById('cn-lk-'+ti).value)||0;
+    if (!nS&&!lG) continue;
+    var nG=(nS>0&&nK>0)?roundG(nS/nK):0;
+    var lPul=lG*lK;
+    var lomGEq=(lG>0&&lK>0&&nK>0)?roundG(lPul/nK):0;
+    var totalG=nG+lomGEq;
+    t.ostatka=Math.max(0, t.ostatka-totalG);
+    t.tarix.push({tip:'tolov',sana:sana,kimga:kimga,naqtSumma:nS,naqtGramm:nG,naqtKurs:nK,lomGramm:lG,lomKurs:lK,lomPul:lPul,lomGEq:lomGEq,jami:totalG});
+    any=true;
+  }
+  if (!any) { alert('Kamida 1 ta turga tolov kiriting!'); return; }
+  save('Chiqim | '+z.nom+' | '+sana+' | '+(kimga||'—'));
+  goTo('s-home');
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openZavodModal() { document.getElementById('zavod-nom').value=''; document.getElementById('modal-zavod').classList.add('open'); setTimeout(function(){ document.getElementById('zavod-nom').focus(); },100); }
+function openTurModal() { document.getElementById('tur-modal-title').textContent='Tur qoshish — '+(data.zavodlar[curZ]?data.zavodlar[curZ].nom:''); document.getElementById('tur-nom').value=''; document.getElementById('modal-tur').classList.add('open'); setTimeout(function(){ document.getElementById('tur-nom').focus(); },100); }
+function saqlashZavod() { var nom=document.getElementById('zavod-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} data.zavodlar.push({nom:nom,turlar:[]}); save(); closeModal('modal-zavod'); renderHome(); }
+function saqlashTur() { var nom=document.getElementById('tur-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} data.zavodlar[curZ].turlar.push({nom:nom,ostatka:0,tarix:[]}); save(); closeModal('modal-tur'); renderZavod(); }
+
+document.addEventListener('wheel', function(e){
+  if(document.activeElement && document.activeElement.type==='number'){
+    document.activeElement.blur();
+  }
+}, {passive:true});
+
+document.querySelectorAll('.modal-overlay').forEach(function(el){ el.addEventListener('click', function(e){ if(e.target===el) el.classList.remove('open'); }); });
+document.addEventListener('keydown', function(e){
+  if(e.key==='Enter'){
+    if(document.getElementById('modal-zavod').classList.contains('open')) saqlashZavod();
+    else if(document.getElementById('modal-tur').classList.contains('open')) saqlashTur();
+    else if(document.getElementById('s-kirim').classList.contains('active')) kirimSaqlash();
+  }
+});
+
+// ── TAHRIRLASH ────────────────────────────────────────────────────────────────
+var _editZi=-1, _editTi=-1, _editOi=-1;
+function openEditModal(zi,ti,oi) {
+  _editZi=zi; _editTi=ti; _editOi=oi;
+  var op=data.zavodlar[zi].turlar[ti].tarix[oi];
+  var isK=op.tip==='mol';
+  document.getElementById('edit-title').textContent=(isK?'Kirim':'Chiqim')+' — '+data.zavodlar[zi].turlar[ti].nom;
+  var body='';
+  body+='<div class="field"><label>Sana</label><input type="date" id="e-sana" style="font-size:16px;" value="'+(op.sana?op.sana.split('.').reverse().join('-'):'')+'"></div>';
+  if (isK) { body+='<div class="field"><label>Gramm</label><input type="number" id="e-gramm" style="font-size:16px;" value="'+op.gramm+'"></div>'; }
+  else {
+    body+='<div class="field"><label>Kimga</label><input type="text" id="e-kimga" style="font-size:16px;" value="'+(op.kimga||'')+'"></div>';
+    body+='<div class="field"><label>Naqt ($)</label><input type="number" id="e-naqts" style="font-size:16px;" value="'+(op.naqtSumma||0)+'"></div>';
+    body+='<div class="field"><label>Naqt kursi ($/g)</label><input type="number" id="e-naqtk" style="font-size:16px;" value="'+(op.naqtKurs||0)+'"></div>';
+    body+='<div class="field"><label>Lom (g)</label><input type="number" id="e-lomg" style="font-size:16px;" value="'+(op.lomGramm||0)+'"></div>';
+    body+='<div class="field"><label>Lom kursi ($/g)</label><input type="number" id="e-lomk" style="font-size:16px;" value="'+(op.lomKurs||0)+'"></div>';
+  }
+  document.getElementById('edit-body').innerHTML=body;
+  document.getElementById('edit-log').style.display='none';
+  var el=document.getElementById('edit-log'); if(el) el.style.display='none';
+  document.getElementById('modal-edit').classList.add('open');
+}
+function editSaqla() {
+  var zi=_editZi,ti=_editTi,oi=_editOi;
+  var t=data.zavodlar[zi].turlar[ti];
+  var op=t.tarix[oi];
+  var isK=op.tip==='mol';
+  var sanaEl=document.getElementById('e-sana');
+  var newSana=sanaEl&&sanaEl.value?sanaEl.value.split('-').reverse().join('.'):op.sana;
+  if (isK) {
+    var newG=parseNum(document.getElementById('e-gramm').value);
+    t.ostatka=Math.max(0, t.ostatka-op.gramm+newG);
+    op.gramm=newG;
+  } else {
+    var nS=parseNum(document.getElementById('e-naqts').value);
+    var nK=parseNum(document.getElementById('e-naqtk').value);
+    var lG=parseNum(document.getElementById('e-lomg').value);
+    var lK=parseNum(document.getElementById('e-lomk').value);
+    var kimga=document.getElementById('e-kimga').value.trim();
+    var nG=(nS>0&&nK>0)?roundG(nS/nK):0;
+    var lPul=lG*lK;
+    var lomGEq=(lG>0&&lK>0&&nK>0)?roundG(lPul/nK):0;
+    var newJami=nG+lomGEq;
+    t.ostatka=Math.max(0, t.ostatka+op.jami-newJami);
+    op.kimga=kimga;op.naqtSumma=nS;op.naqtKurs=nK;op.naqtGramm=nG;op.lomGramm=lG;op.lomKurs=lK;op.lomPul=lPul;op.lomGEq=lomGEq;op.jami=newJami;
+  }
+  var oldSana=op.sana;
+  op.sana=newSana;
+  save('Tahrir | '+data.zavodlar[zi].nom+'.'+data.zavodlar[zi].turlar[ti].nom);
+  closeModal('modal-edit');
+  renderHome();
+  if(curHomeTab==='hisobot') renderHisobot();
+}
+function editOchir() {
+  if(!confirm('Bu operatsiyani ochirmoqchimisiz?')) return;
+  var zi=_editZi,ti=_editTi,oi=_editOi;
+  var t=data.zavodlar[zi].turlar[ti];
+  var op=t.tarix[oi];
+  if(op.tip==='mol') t.ostatka=Math.round((t.ostatka-op.gramm)*100)/100;
+  else if(op.tip==='vozvrat') t.ostatka=Math.round((t.ostatka+op.gramm)*100)/100;
+  else t.ostatka=Math.round((t.ostatka+(op.jami||0))*100)/100;
+  t.tarix.splice(oi,1);
+  save('Ochirildi | '+data.zavodlar[zi].nom+'.'+data.zavodlar[zi].turlar[ti].nom);
+  closeModal('modal-edit');
+  renderHome();
+  if(curHomeTab==='hisobot') renderHisobot();
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function openResetModal() { document.getElementById('modal-reset').classList.add('open'); }
+function doLogout(){ localStorage.removeItem('tilla-auth'); localStorage.removeItem('tilla-rol'); document.cookie='tilla-auth=;max-age=0;path=/'; location.reload(); }
+async function cacheOchir() {
+  if(confirm('localStorage tozalanadi va sahifa qayta yuklanadi. Davom etasizmi?')){
+    localStorage.removeItem('tilla-v2');
+    localStorage.removeItem('tilla-theme');
+    location.reload(true);
+  }
+}
+async function resetTasdiqlash() {
+  if(confirm('BARCHA MALUMOT OCHIRILADI! Davom etasizmi?')){
+    if(confirm('Haqiqatan ham?')){
+      localStorage.removeItem('tilla-v2');
+      location.reload();
+    }
+  }
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+var _pdfZavodIdx = null;
+var _pdfTip = null;
+function openPDFModal(zi) {
+  _pdfTip = null;
+  _pdfZavodIdx=zi;
+  var now=new Date(), y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0');
+  var last=new Date(y,now.getMonth()+1,0).getDate();
+  document.getElementById('pdf-dan').value=y+'-'+m+'-01';
+  document.getElementById('pdf-gacha').value=y+'-'+m+'-'+String(last).padStart(2,'0');
+  document.getElementById('modal-pdf').classList.add('open');
+}
+function pdfDavrTanla(tip) {
+  var now=new Date(),dan,gacha;
+  if(tip==='hammasi'){dan=null;gacha=null;}
+  else if(tip==='oylik'){var y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,'0'),last=new Date(y,now.getMonth()+1,0).getDate();dan=y+'-'+m+'-01';gacha=y+'-'+m+'-'+String(last).padStart(2,'0');}
+  else if(tip==='haftalik'){var day=now.getDay()||7,mon=new Date(now);mon.setDate(now.getDate()-day+1);var sun=new Date(mon);sun.setDate(mon.getDate()+6);dan=mon.toISOString().slice(0,10);gacha=sun.toISOString().slice(0,10);}
+  else{dan=document.getElementById('pdf-dan').value;gacha=document.getElementById('pdf-gacha').value;}
+  closeModal('modal-pdf');
+  if (_pdfTip === 'klientlar') { openKlientlarPDFModal(dan||null, gacha||null); return; }
+  if (_pdfTip === 'kassa') { kassaPDFYukor(dan||null, gacha||null); return; }
+  if (_pdfTip === 'klient_detail') { klientPDFYukor(dan||null, gacha||null); return; }
+  var payload={zavodlar:data.zavodlar,dan:dan||null,gacha:gacha||null,zavod:(_pdfZavodIdx!==null&&_pdfZavodIdx!==undefined)?data.zavodlar[_pdfZavodIdx].nom:null};
+  fetch('/api/pdf.py',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+  .then(function(r){if(!r.ok) throw new Error('Server xatosi');return r.blob();})
+  .then(function(blob){var url=URL.createObjectURL(blob);window.open(url,'_blank');setTimeout(function(){URL.revokeObjectURL(url);},10000);})
+  .catch(function(e){alert('PDF xato: '+e.message);});
+}
+
+// ── KLIENT TIZIMI ─────────────────────────────────────────────────────────────
+var curKlientIdx = -1;
+
+var currentTheme=localStorage.getItem('tilla-theme')||'dark';
+
+function applyTheme(t){
+  currentTheme=t;
+  document.documentElement.setAttribute('data-theme',t==='light'?'light':'');
+  var ico=document.getElementById('theme-icon');
+  if(ico){ ico.innerHTML=t==='light'?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'; }
+  localStorage.setItem('tilla-theme',t);
+}
+function toggleTheme(){applyTheme(currentTheme==='dark'?'light':'dark');}
+applyTheme(currentTheme);
+
+// ── PULL TO REFRESH ───────────────────────────────────────────────────────────
+(function(){
+  var startY=0,curY=0,pulling=false,threshold=80;
+  var ind=document.getElementById('ptr-indicator');
+  document.addEventListener('touchstart',function(e){startY=e.touches[0].pageY;pulling=(window.pageYOffset===0);},{passive:true});
+  document.addEventListener('touchmove',function(e){if(!pulling)return;curY=e.touches[0].pageY;var dy=Math.min(curY-startY,120);if(dy>15){ind.style.top=Math.min(dy*0.5,60)+'px';ind.style.opacity=Math.min(dy/threshold,1);ind.textContent=dy>threshold?'↻':'↓';}},{passive:true});
+  document.addEventListener('touchend',function(e){if(!pulling)return;pulling=false;var dy=curY-startY;if(dy>threshold){ind.textContent='↻';var curTab=document.getElementById('main-klient').style.display!=='none'?'klient':'zavod';sessionStorage.setItem('activeTab',curTab);setTimeout(function(){location.reload();},400);}else{ind.style.top='-60px';ind.style.opacity='0';}},{passive:true});
+})();
+
+// ── STARTUP ───────────────────────────────────────────────────────────────────
+var _savedTab='zavod';
+sessionStorage.removeItem('activeTab');
+applyRol();
+renderHome();
+mainTab(_savedTab);
+
+// Swipe left/right - tab almashtirish
+(function(){
+  var swipeStartX=0, swipeStartY=0, swiping=false;
+  var THRESHOLD=60, VERT_MAX=80;
+  
+  document.addEventListener('touchstart', function(e){
+    // Faqat s-home da ishlaydi
+    if(!document.getElementById('s-home').classList.contains('active')) return;
+    swipeStartX=e.touches[0].clientX;
+    swipeStartY=e.touches[0].clientY;
+    swiping=true;
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(e){
+    if(!swiping) return;
+    swiping=false;
+    var dx=e.changedTouches[0].clientX - swipeStartX;
+    var dy=Math.abs(e.changedTouches[0].clientY - swipeStartY);
+    if(dy > VERT_MAX) return; // vertikal scroll
+    if(dx < -THRESHOLD) {
+      // Chapga → Klientlar
+      mainTab('klient');
+    } else if(dx > THRESHOLD) {
+      // Ongga tab
+      mainTab('zavod');
+    }
+  }, {passive:true});
+})();
+
+
+
+function zvCalc(ti, ostatka) {
+  var el = document.getElementById('zvg-'+ti);
+  var resEl = document.getElementById('zvc-'+ti);
+  var valEl = document.getElementById('zvr-'+ti);
+  if (!el || !resEl || !valEl) return;
+  var g = parseNum(el.value);
+  if (g > 0) {
+    var qoladi = Math.round((ostatka - g)*100)/100;
+    valEl.textContent = fmtG(qoladi);
+    resEl.style.color = qoladi < 0 ? 'var(--red)' : 'var(--green)';
+    resEl.style.display = 'block';
+  } else {
+    resEl.style.display = 'none';
+  }
+}
+
+// ZAVOD VOZVRAT
+function zvInit() {
+  document.getElementById('zv-sana').value = nowDate();
+  var sel = document.getElementById('zv-zavod');
+  sel.innerHTML = '<option value="">— Tanlang —</option>';
+  data.zavodlar.forEach(function(z,i){ sel.innerHTML += '<option value="'+i+'">'+z.nom+'</option>'; });
+  document.getElementById('zv-turlar-card').style.display = 'none';
+}
+function zvZavodChange() {
+  var zi = parseInt(document.getElementById('zv-zavod').value);
+  var card = document.getElementById('zv-turlar-card');
+  if (isNaN(zi)||!data.zavodlar[zi]) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  var out = '';
+  data.zavodlar[zi].turlar.forEach(function(t,ti) {
+    out += '<div style="display:flex;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);">'
+      + '<div style="flex:1;padding-top:8px;"><div style="font-size:14px;font-weight:600;color:var(--text);">'+t.nom+'</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:2px;">ostatka: '+fmtG(t.ostatka)+'g</div></div>'
+      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">'
+      + '<div style="display:flex;align-items:center;gap:6px;">'
+      + '<input type="number" id="zvg-'+ti+'" placeholder="0" oninput="zvCalc('+ti+','+t.ostatka+')" style="width:90px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);font-size:16px;background:var(--surf2);color:#5ab4e8;text-align:right;">'
+      + '<span style="font-size:12px;color:var(--muted);">g</span></div>'
+      + '<div id="zvc-'+ti+'" style="font-size:10px;color:var(--green);display:none;">qoladi: <b id="zvr-'+ti+'">0</b>g</div>'
+      + '</div></div>';
+  });
+  document.getElementById('zv-turlar-inputs').innerHTML = out;
+}
+function zvSaqlash() {
+  var zi = parseInt(document.getElementById('zv-zavod').value);
+  if (isNaN(zi)) { alert('Zavod tanlang!'); return; }
+  var z = data.zavodlar[zi];
+  var sanaEl = document.getElementById('zv-sana');
+  var sana = sanaEl&&sanaEl.value ? sanaEl.value.split('-').reverse().join('.') : today();
+  var any = false;
+  z.turlar.forEach(function(t,ti) {
+    var el = document.getElementById('zvg-'+ti);
+    var g = el ? parseNum(el.value) : 0;
+    if (g > 0) { t.ostatka = Math.round((t.ostatka - g)*100)/100; t.tarix.push({tip:'vozvrat', sana:sana, gramm:g}); any = true; }
+  });
+  if (!any) { alert('Gramm kiriting!'); return; }
+  save('Zavod vozvrat | '+z.nom+' | '+sana);
+  goTo('s-home');
+}
+
+
+
+
+// PC LAYOUT — ikki panel
+function isPCMode(){ return window.innerWidth >= 1024; }
+
+function initPC() {
+  if (!isPCMode()) return;
+  var mz = document.getElementById('main-zavod');
+  var mk = document.getElementById('main-klient'); if(!mk) return;
+  mz.style.display = 'flex';
+  mk.style.display = 'flex';
+  renderHome();
+  renderKlientlar();
+}
+
+var _origGoTo = goTo;
+goTo = function(id) {
+  _origGoTo(id);
+  if (isPCMode()) {
+    var mz = document.getElementById('main-zavod');
+    var mk = document.getElementById('main-klient'); if(!mk) return;
+    if (id === 's-home') {
+      mz.style.removeProperty('display');
+      renderHome();
+    }
+  }
+};
+
+var _origMainTab = mainTab;
+mainTab = function(tab) {
+  if (isPCMode()) {
+    initPC(); return;
+  }
+  _origMainTab(tab);
+};
+
+setTimeout(initPC, 150);
+window.addEventListener('resize', function() { initPC(); });
+
+</script>
+</body>
+</html>
