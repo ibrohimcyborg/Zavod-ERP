@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/excel", "destination": "/api/excel.py" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }
