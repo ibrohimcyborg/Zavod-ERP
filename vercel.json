@@ -1,8 +1,10 @@
 {
   "builds": [
-    { "src": "api/pdf.py", "use": "@vercel/python" }
+    { "src": "api/pdf.py", "use": "@vercel/python" },
+    { "src": "index.html", "use": "@vercel/static" }
   ],
-  "rewrites": [
-    { "source": "/((?!api).*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api/pdf.py", "dest": "/api/pdf.py" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
