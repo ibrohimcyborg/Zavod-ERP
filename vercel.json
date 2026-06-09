@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/pdf.py": {
-      "runtime": "python3.9"
-    }
-  },
   "rewrites": [
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
