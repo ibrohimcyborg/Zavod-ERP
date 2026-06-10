@@ -6,6 +6,8 @@
 <meta name="screen-orientation" content="any">
 <title>Zavod Hisob</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
 :root{--bg:#0f0f0f;--surf:#1a1a1a;--surf2:#242424;--border:#2a2a2a;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ede6;--muted:#666;--red:#e05a5a;--green:#5ab87a;--r:14px;--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);}
@@ -438,10 +440,43 @@ function doLogin(){
 })();
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
+// ── FIREBASE ─────────────────────────────────────────────────────────────────
+var firebaseConfig = {
+  apiKey: "AIzaSyA3GQwgDY5cvrAqbe6z_i1qo_YU589d93w",
+  authDomain: "zavod-erp-88cd6.firebaseapp.com",
+  projectId: "zavod-erp-88cd6",
+  storageBucket: "zavod-erp-88cd6.firebasestorage.app",
+  messagingSenderId: "750150823365",
+  appId: "1:750150823365:web:ae71c65d174aea5a12afac"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var DOC_ID = 'main';
+
 var data = JSON.parse(localStorage.getItem('tilla-v2') || '{"zavodlar":[]}');
 if (!data.zavodlar) data.zavodlar = [];
 
-function save() { localStorage.setItem('tilla-v2', JSON.stringify(data)); }
+function save() {
+  localStorage.setItem('tilla-v2', JSON.stringify(data));
+  db.collection('zavod-erp').doc(DOC_ID).set(data).catch(function(e){ console.error('Firebase save xato:', e); });
+}
+
+function loadFromFirebase(callback) {
+  db.collection('zavod-erp').doc(DOC_ID).get().then(function(doc) {
+    if (doc.exists) {
+      var fbData = doc.data();
+      if (fbData && fbData.zavodlar) {
+        data = fbData;
+        if (!data.zavodlar) data.zavodlar = [];
+        localStorage.setItem('tilla-v2', JSON.stringify(data));
+      }
+    }
+    if (callback) callback();
+  }).catch(function(e) {
+    console.error('Firebase load xato:', e);
+    if (callback) callback();
+  });
+}
 function parseNum(v){ if(!v&&v!==0) return 0; return parseFloat(String(v).replace(/,/g,'.'))||0; }
 function fmtG(g){ var v=parseFloat(g); return (v<0?'-':'')+Math.abs(v).toFixed(2); }
 function fmtD(d){ return parseFloat(d).toLocaleString('en-US',{maximumFractionDigits:2}); }
@@ -1100,8 +1135,10 @@ goTo=function(id){
 };
 
 // ── STARTUP ───────────────────────────────────────────────────────────────────
-renderHome();
-setTimeout(initPC,150);
+loadFromFirebase(function() {
+  renderHome();
+  setTimeout(initPC,150);
+});
 window.addEventListener('resize',function(){ initPC(); });
 </script>
 </body>
