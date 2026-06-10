@@ -485,7 +485,7 @@ function renderHome(){
       +'<div><div class="zrow-name">'+z.nom+'</div>'
       +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+z.turlar.length+' ta tur</div></div>'
       +'<div style="display:flex;align-items:center;gap:8px;">'
-      +'<div class="zrow-g" style="color:'+(zG<0?'var(--green)':'var(--red)')+'">'+fmtG(zG)+' g</div>'
+      +'<div class="zrow-g" style="color:'+(zG>0?'var(--red)':'var(--green)')+'">'+fmtG(zG)+' g</div>'
       +'<div style="color:var(--muted);">›</div></div></div>';
   });
   list.innerHTML=out;
@@ -539,7 +539,7 @@ function renderHisobot(){
           out+='<button onclick="event.stopPropagation();openEditModal('+gzi+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
           if(isK){
-            out+='<div style="font-size:12px;color:var(--red);">+'+fmtG(op.gramm)+' g</div>';
+            out+='<div style="font-size:12px;color:var(--red);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
           } else if(op.tip==='vozvrat'){
             out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
           } else {
@@ -575,7 +575,7 @@ function renderZavod(){
     var rows='';
     t.tarix.slice().reverse().forEach(function(op){
       if(op.tip==='mol'){
-        rows+='<div class="trow"><div><span style="color:var(--red);">+ Kirim</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:var(--red);">+'+fmtG(op.gramm)+'g</span></div>';
+        rows+='<div class="trow"><div><span style="color:var(--red);">+ Kirim</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:var(--red);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+'g</span></div>';
       } else if(op.tip==='vozvrat'){
         rows+='<div class="trow"><div><span style="color:#5ab4e8;">↩ Vozvrat</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:#5ab4e8;">-'+fmtG(op.gramm)+'g</span></div>';
       } else {
@@ -673,7 +673,7 @@ function renderZavodHisobot(){
           out+='<div style="font-size:13px;font-weight:600;color:var(--text);">'+item.tur+'</div>';
           out+='<button onclick="event.stopPropagation();openEditModal('+curZ+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
-          if(isK) out+='<div style="font-size:12px;color:var(--red);">+'+fmtG(op.gramm)+' g</div>';
+          if(isK) out+='<div style="font-size:12px;color:var(--red);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
           else if(isV) out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
           else out+='<div style="font-size:12px;color:var(--green);font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
         });
@@ -794,7 +794,7 @@ function chiqimSaqlash(){
     var lPul=lG*lK;
     var lomGEq=(lG>0&&lK>0&&nK>0)?roundG(lPul/nK):0;
     var totalG=nG+lomGEq;
-    t.ostatka=Math.max(0,t.ostatka-totalG);
+    t.ostatka=Math.round((t.ostatka-totalG)*100)/100;
     t.tarix.push({tip:'tolov',sana:sana,naqtSumma:nS,naqtGramm:nG,naqtKurs:nK,lomGramm:lG,lomKurs:lK,lomPul:lPul,lomGEq:lomGEq,jami:totalG});
     any=true;
   }
@@ -850,11 +850,11 @@ function editSaqla(){
   var newSana=sanaEl&&sanaEl.value?sanaEl.value.split('-').reverse().join('.'):op.sana;
   if(op.tip==='mol'){
     var newG=parseNum(document.getElementById('e-gramm').value);
-    t.ostatka=Math.max(0,t.ostatka-op.gramm+newG);
+    t.ostatka=Math.round((t.ostatka-op.gramm+newG)*100)/100;
     op.gramm=newG;
   } else if(op.tip==='vozvrat'){
     var newG=parseNum(document.getElementById('e-gramm').value);
-    t.ostatka=Math.max(0,t.ostatka+op.gramm-newG);
+    t.ostatka=Math.round((t.ostatka+op.gramm-newG)*100)/100;
     op.gramm=newG;
   } else {
     var nS=parseNum(document.getElementById('e-naqts').value);
@@ -865,7 +865,7 @@ function editSaqla(){
     var lPul=lG*lK;
     var lomGEq=(lG>0&&lK>0&&nK>0)?roundG(lPul/nK):0;
     var newJami=nG+lomGEq;
-    t.ostatka=Math.max(0,t.ostatka+op.jami-newJami);
+    t.ostatka=Math.round((t.ostatka+op.jami-newJami)*100)/100;
     op.naqtSumma=nS;op.naqtKurs=nK;op.naqtGramm=nG;op.lomGramm=lG;op.lomKurs=lK;op.lomPul=lPul;op.lomGEq=lomGEq;op.jami=newJami;
   }
   op.sana=newSana;
