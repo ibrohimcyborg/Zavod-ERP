@@ -495,9 +495,10 @@ function renderHome(){
   if(!data.zavodlar.length){ list.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
   var out='';
-  data.zavodlar.forEach(function(z,zi){
-    var zG=0; z.turlar.forEach(function(t){ zG+=t.ostatka; });
-    zG=Math.round(zG*100)/100;
+  var sortedZ=data.zavodlar.map(function(z,zi){ var zG=0; z.turlar.forEach(function(t){ zG+=t.ostatka; }); return {z:z,zi:zi,zG:Math.round(zG*100)/100}; });
+  sortedZ.sort(function(a,b){ return Math.abs(b.zG)-Math.abs(a.zG); });
+  sortedZ.forEach(function(item){
+    var z=item.z,zi=item.zi,zG=item.zG;
     out+='<div class="zrow" onclick="openZavod('+zi+')">'
       +'<div><div class="zrow-name">'+z.nom+'</div>'
       +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+z.turlar.length+' ta tur</div></div>'
