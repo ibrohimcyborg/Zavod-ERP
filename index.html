@@ -494,10 +494,10 @@ function startListener() {
       var fbData = doc.data();
       if (!fbData || !fbData.zavodlar) return;
 
-      // Firebase dagi ma'lumot localdan yangi bo'lsa qabul qil
-      var fbStr = JSON.stringify(fbData);
-      var localStr = JSON.stringify(data);
-      if (fbStr === localStr) return;
+      // O'z yozganimizni qaytib olmaslik uchun timestamp tekshirish
+      var fbUpdated = fbData._updated || 0;
+      var localUpdated = data._updated || 0;
+      if (_appReady && fbUpdated <= localUpdated) return;
 
       data = fbData;
       if (!data.zavodlar) data.zavodlar = [];
@@ -525,6 +525,7 @@ function startListener() {
 }
 
 function save() {
+  data._updated = Date.now();
   localStorage.setItem('tilla-v2', JSON.stringify(data));
   db.collection('zavod-erp').doc('main').set(data)
     .catch(function(e){ console.error('Firebase save xato:', e); });
@@ -1049,10 +1050,31 @@ function editOchir(){
 }
 
 // ── RESET ─────────────────────────────────────────────────────────────────────
+function dedupTarix(){
+  var fixed=0;
+  data.zavodlar.forEach(function(z){
+    z.turlar.forEach(function(t){
+      var seen={};
+      var clean=[];
+      t.tarix.forEach(function(op){
+        var key=op.tip+'|'+op.sana+'|'+(op.gramm||'')+'|'+(op.jami||'')+'|'+(op.naqtSumma||'');
+        if(!seen[key]){ seen[key]=true; clean.push(op); }
+        else fixed++;
+      });
+      t.tarix=clean;
+    });
+  });
+  return fixed;
+}
+
 function cloudYukla(){
   if(!confirm('Hozirgi qurilmadagi barcha malumotni cloud ga yuklash?')) return;
+  var dup=dedupTarix();
+  if(dup>0){ alert(dup+' ta dublikat tozalandi. Endi yuklanmoqda...'); }
+  data._updated=Date.now();
+  localStorage.setItem('tilla-v2',JSON.stringify(data));
   db.collection('zavod-erp').doc('main').set(data)
-    .then(function(){ alert('Cloud ga yuklandi!'); })
+    .then(function(){ alert('Cloud ga yuklandi!'); renderHome(); })
     .catch(function(e){ alert('Xato: '+e.message); });
 }
 function openResetModal(){ document.getElementById('modal-reset').classList.add('open'); }
