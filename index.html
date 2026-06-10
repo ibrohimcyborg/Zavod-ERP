@@ -533,7 +533,7 @@ function renderHisobot(){
       out+='<div style="display:flex;justify-content:space-between;align-items:center;">';
       out+='<div><div style="font-size:15px;font-weight:700;color:'+bc+';">'+(isK?'↓ Kirim':isV?'↩ Vozvrat':'↑ Chiqim')+'</div>';
       out+='<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">'+g.zavod+' · '+g.sana+'</div></div>';
-      var jamiColor=isK?'var(--green)':bc;
+      var jamiColor=isK?(jamiG>0?'var(--red)':'var(--green)'):bc;
       out+='<div style="font-family:Roboto,sans-serif;font-size:16px;font-weight:600;color:'+jamiColor+';">'+fmtG(jamiG)+' g</div>';
       out+='</div>';
       if(isOpen){
@@ -548,7 +548,8 @@ function renderHisobot(){
           out+='<button onclick="event.stopPropagation();openEditModal('+gzi+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
           if(isK){
-            out+='<div style="font-size:12px;color:var(--green);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
+            var kGcolor=op.gramm>0?'var(--red)':'var(--green)';
+            out+='<div style="font-size:12px;color:'+kGcolor+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
           } else if(op.tip==='vozvrat'){
             out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
           } else {
@@ -666,7 +667,7 @@ function renderZavodHisobot(){
       g.turlar.forEach(function(item){ if(item.op.tip==='mol'||item.op.tip==='vozvrat') jamiG+=item.op.gramm; else jamiG+=(item.op.jami||0); });
       jamiG=Math.round(jamiG*100)/100;
       var bc=isK?'var(--red)':(isV?'#5ab4e8':'var(--green)');
-      var jamiColor=isK?'var(--green)':bc;
+      var jamiColor=isK?(jamiG>0?'var(--red)':'var(--green)'):bc;
       out+='<div class="hrow" style="border-left:3px solid '+bc+';cursor:pointer;margin-bottom:8px;" onclick="toggleZH('+idx+')">';
       out+='<div style="display:flex;justify-content:space-between;align-items:center;">';
       out+='<div><div style="font-size:15px;font-weight:700;color:'+bc+';">'+(isK?'↓ Kirim':isV?'↩ Vozvrat':'↑ Chiqim')+'</div>';
@@ -683,7 +684,7 @@ function renderZavodHisobot(){
           out+='<div style="font-size:13px;font-weight:600;color:var(--text);">'+item.tur+'</div>';
           out+='<button onclick="event.stopPropagation();openEditModal('+curZ+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
-          if(isK) out+='<div style="font-size:12px;color:var(--green);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
+          if(isK){ var kGcolor2=op.gramm>0?'var(--red)':'var(--green)'; out+='<div style="font-size:12px;color:'+kGcolor2+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>'; }
           else if(isV) out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
           else out+='<div style="font-size:12px;color:var(--green);font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
         });
