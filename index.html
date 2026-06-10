@@ -9,7 +9,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
 :root{--bg:#0f0f0f;--surf:#1a1a1a;--surf2:#242424;--border:#2a2a2a;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ede6;--muted:#666;--red:#e05a5a;--green:#5ab87a;--r:14px;--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);}
-[data-theme="light"]{--bg:#f5f4f0;--surf:#ffffff;--surf2:#f0efe9;--border:#e0ddd4;--text:#1a1a1a;--muted:#999;--gold:#a07830;--gold2:#b89040;--red:#d04040;--green:#3a9060;}
+[data-theme="light"]{--bg:#f7f7f5;--surf:#ffffff;--surf2:#f2f1ee;--border:#e8e5de;--text:#1a1a1a;--muted:#888;--gold:#a07830;--gold2:#b89040;--red:#d04040;--green:#3a9060;}[data-theme="light"] .big-btn.kirim{background:#fde8e8;border-color:#f5c0c0;}[data-theme="light"] .big-btn.chiqim{background:#e8f5e8;border-color:#c0f0c0;}[data-theme="light"] .big-btn{border-color:#e0ddd4;}[data-theme="light"] .big-btn.vozvrat{background:#e8f2f8;border-color:#b0d0e8;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;padding-bottom:calc(20px + var(--safe-bot));-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain;}
 .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:0 16px;padding-top:var(--safe-top);height:calc(54px + var(--safe-top));display:flex;align-items:flex-end;padding-bottom:10px;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -28,12 +28,12 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .big-stat-val span{font-size:18px;color:var(--muted);margin-left:4px;}
 .big-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
 .big-btn{border-radius:var(--r);padding:18px 16px;cursor:pointer;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;transition:all .15s;}
-.big-btn.kirim{background:#0f1f10;border-color:#1e3a1e;}
-.big-btn.chiqim{background:#1f0f0f;border-color:#3a1e1e;}
-.big-btn-icon{font-size:24px;opacity:.8;}
+.big-btn.kirim{background:#2a1010;border-color:#4a2020;}
+.big-btn.chiqim{background:#102a10;border-color:#204a20;}
+.big-btn-icon{font-size:24px;}
 .big-btn-label{font-size:17px;font-weight:600;}
-.big-btn.kirim .big-btn-label{color:var(--green);}
-.big-btn.chiqim .big-btn-label{color:var(--red);}
+.big-btn.kirim .big-btn-label{color:var(--red);}
+.big-btn.chiqim .big-btn-label{color:var(--green);}
 .big-btn-sub{font-size:12px;color:var(--muted);}
 .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;}
 .card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
@@ -162,9 +162,9 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="topbar">
   <div class="logo">⬡ ZAVOD HISOB</div>
   <div class="topbar-right">
-    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Tema" style="border-radius:8px;"><span id="theme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
-    <button class="theme-btn" onclick="openResetModal()" aria-label="Sozlamalar" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    <button class="theme-btn" onclick="doLogout()" aria-label="Chiqish" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Tema" style="border-radius:8px;"><span id="theme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
+    <button class="theme-btn" onclick="openResetModal()" aria-label="Sozlamalar" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="theme-btn" onclick="doLogout()" aria-label="Chiqish" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
   </div>
 </div>
 
@@ -196,14 +196,14 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
         <div class="big-btn kirim" onclick="goTo('s-kirim')" style="padding:14px 10px;">
-          <div class="big-btn-icon" style="font-size:20px;">↓</div>
+          <div class="big-btn-icon" style="font-size:20px;color:var(--red);">↓</div>
           <div class="big-btn-label" style="font-size:14px;">Kirim</div>
         </div>
         <div class="big-btn chiqim" onclick="goTo('s-chiqim')" style="padding:14px 10px;">
-          <div class="big-btn-icon" style="font-size:20px;">↑</div>
+          <div class="big-btn-icon" style="font-size:20px;color:var(--green);">↑</div>
           <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
         </div>
-        <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
+        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
           <div class="big-btn-icon" style="font-size:20px;color:#5ab4e8;">↩</div>
           <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
         </div>
@@ -240,20 +240,7 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="big-stat-label">Qoldiq</div>
     <div class="big-stat-val" id="zavod-total" style="font-size:32px;">0<span>g</span></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-    <div class="big-btn kirim" onclick="goTo('s-kirim')" style="padding:14px 10px;">
-      <div class="big-btn-icon" style="font-size:20px;">↓</div>
-      <div class="big-btn-label" style="font-size:14px;">Kirim</div>
-    </div>
-    <div class="big-btn chiqim" onclick="goTo('s-chiqim')" style="padding:14px 10px;">
-      <div class="big-btn-icon" style="font-size:20px;">↑</div>
-      <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
-    </div>
-    <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0a121a;border-color:#1e2a4a;padding:14px 10px;">
-      <div class="big-btn-icon" style="font-size:20px;opacity:.8;color:#5ab4e8;">↩</div>
-      <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
-    </div>
-  </div>
+
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <button class="action-btn" onclick="openTurModal()">+ Tur</button>
     <button class="action-btn" onclick="openPDFModal(curZ)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
@@ -993,10 +980,17 @@ var currentTheme=localStorage.getItem('tilla-theme')||'dark';
 function applyTheme(t){
   currentTheme=t;
   document.documentElement.setAttribute('data-theme',t==='light'?'light':'');
+  var s=t==='light'?'#444':'#888';
   var ico=document.getElementById('theme-icon');
   if(ico) ico.innerHTML=t==='light'
-    ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-    :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+    ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+s+'" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+    :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+s+'" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  var allSvgs=document.querySelectorAll('.theme-btn svg, .theme-btn span svg');
+  allSvgs.forEach(function(svg){ svg.setAttribute('stroke',s); });
+  document.querySelectorAll('.big-btn.vozvrat').forEach(function(el){
+    if(t==='light'){ el.style.background='#e8f2f8'; el.style.borderColor='#b0d0e8'; }
+    else { el.style.background=''; el.style.borderColor=''; }
+  });
   localStorage.setItem('tilla-theme',t);
 }
 function toggleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
