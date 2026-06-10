@@ -407,6 +407,7 @@ input[type=number]{-moz-appearance:textfield;}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Sozlamalar</div>
+    <button class="davr-btn" onclick="cloudYukla()" style="color:#5ab87a;border-color:#1e4a2a;">☁ Cloud ga yuklash</button>
     <button class="davr-btn" onclick="cacheOchir()">🗑 Kesh tozalash</button>
     <button class="davr-btn" onclick="resetTasdiqlash()" style="color:var(--red);border-color:var(--red);">⚠ Barcha malumotni ochirish</button>
     <button class="davr-btn" onclick="closeModal('modal-reset')" style="color:var(--muted);">Bekor</button>
@@ -460,7 +461,7 @@ function save() {
 }
 
 function loadFromFirebase(callback) {
-  getSB().from('zavod_data').select('data').eq('id','main').single()
+  getSB().from('zavod_data').select('data').eq('id','main').limit(1).maybeSingle()
     .then(function(res) {
       if (res.data && res.data.data && res.data.data.zavodlar) {
         data = res.data.data;
@@ -992,6 +993,14 @@ function editOchir(){
 }
 
 // ── RESET ─────────────────────────────────────────────────────────────────────
+function cloudYukla(){
+  if(!confirm('Hozirgi qurilmadagi barcha malumotni cloud ga yuklash?')) return;
+  getSB().from('zavod_data').update({data: data, updated_at: new Date().toISOString()}).eq('id','main')
+    .then(function(res){
+      if(res.error){ alert('Xato: '+res.error.message); return; }
+      alert('Cloud ga yuklandi!');
+    }).catch(function(e){ alert('Xato: '+e.message); });
+}
 function openResetModal(){ document.getElementById('modal-reset').classList.add('open'); }
 function doLogout(){ localStorage.removeItem('tilla-auth'); localStorage.removeItem('tilla-rol'); document.cookie='tilla-auth=;max-age=0;path=/'; location.reload(); }
 function cacheOchir(){
