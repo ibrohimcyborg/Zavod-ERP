@@ -456,7 +456,7 @@ function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById(id).classList.add('active');
   if(id==='s-home') renderHome();
-  if(id==='s-zavod') renderZavod();
+  if(id==='s-zavod'){ renderZavod(); if(curZTab==='hisobot') renderZavodHisobot(); }
   if(id==='s-kirim') initKirim();
   if(id==='s-zvozvrat') zvInit();
   if(id==='s-chiqim') initChiqim();
