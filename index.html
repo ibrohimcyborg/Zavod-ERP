@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="screen-orientation" content="any">
-<title>Tilla Hisob</title>
+<title>Zavod Hisob</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
@@ -147,7 +147,7 @@ input[type=number]{-moz-appearance:textfield;}
   <div style="background:#1c1c1c;border:1px solid #333;border-radius:20px;padding:32px 28px;width:100%;max-width:340px;margin:16px;">
     <div style="text-align:center;margin-bottom:24px;">
       <div style="font-size:32px;margin-bottom:8px;">⬡</div>
-      <div style="font-size:20px;font-weight:700;color:#c9a84c;">TILLA HISOB</div>
+      <div style="font-size:20px;font-weight:700;color:#c9a84c;">ZAVOD HISOB</div>
       <div style="font-size:12px;color:#666;margin-top:4px;">Kirish</div>
     </div>
     <input id="login-user" type="text" placeholder="Login" style="width:100%;background:#111;border:1px solid #333;border-radius:10px;padding:13px 14px;color:#fff;font-size:15px;margin-bottom:10px;display:block;box-sizing:border-box;" />
@@ -160,7 +160,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="ptr-indicator" id="ptr-indicator">↓</div>
 
 <div class="topbar">
-  <div class="logo">⬡ TILLA HISOB</div>
+  <div class="logo">⬡ ZAVOD HISOB</div>
   <div class="topbar-right">
     <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" style="width:auto;padding:0 10px;font-size:12px;font-weight:600;">☀ Light</button>
     <button class="theme-btn" onclick="openResetModal()" style="font-size:13px;">⚙</button>
@@ -194,25 +194,18 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="big-stat-label">Jami qoldiq</div>
         <div class="big-stat-val" id="home-total-mob" style="font-size:28px;">0<span>g</span></div>
       </div>
-      <div class="big-btn-row">
-        <div class="big-btn kirim" onclick="goTo('s-kirim')">
-          <div class="big-btn-icon">↓</div>
-          <div class="big-btn-label">Kirim</div>
-          <div class="big-btn-sub">Zavoddan mol olish</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div class="big-btn kirim" onclick="goTo('s-kirim')" style="padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;">↓</div>
+          <div class="big-btn-label" style="font-size:14px;">Kirim</div>
         </div>
-        <div class="big-btn chiqim" onclick="goTo('s-chiqim')">
-          <div class="big-btn-icon">↑</div>
-          <div class="big-btn-label">Chiqim</div>
-          <div class="big-btn-sub">Tolov qilish</div>
+        <div class="big-btn chiqim" onclick="goTo('s-chiqim')" style="padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;">↑</div>
+          <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
         </div>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;flex-direction:row;align-items:center;gap:12px;padding:14px 18px;">
-          <div style="font-size:20px;color:#5ab4e8;">↩</div>
-          <div>
-            <div style="font-size:15px;font-weight:600;color:#5ab4e8;">Zavodga vozvrat</div>
-            <div style="font-size:12px;color:var(--muted);">Tilla qaytarish</div>
-          </div>
+        <div class="big-btn" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:#5ab4e8;">↩</div>
+          <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
