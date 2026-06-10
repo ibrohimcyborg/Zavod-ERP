@@ -173,19 +173,27 @@ input[type=number]{-moz-appearance:textfield;}
   <div id="main-zavod">
     <!-- PC header -->
     <div class="pc-zavod-hdr">
-      <div class="pc-panel-lbl">Zavodlar</div>
       <div class="big-stat" style="margin-bottom:10px;">
         <div class="big-stat-label">Jami qoldiq</div>
         <div class="big-stat-val" id="home-total" style="font-size:28px;">0<span>g</span></div>
       </div>
-      <div class="pc-btn-grid3">
-        <button class="pc-zbtn kirim" onclick="goTo('s-kirim')">↓ Kirim</button>
-        <button class="pc-zbtn chiqim" onclick="goTo('s-chiqim')">↑ Chiqim</button>
-        <button class="pc-zbtn vozvrat" onclick="goTo('s-zvozvrat')">↩ Vozvrat</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div class="big-btn kirim" onclick="goTo('s-kirim')" style="padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:var(--red);">↓</div>
+          <div class="big-btn-label" style="font-size:14px;">Kirim</div>
+        </div>
+        <div class="big-btn chiqim" onclick="goTo('s-chiqim')" style="padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:var(--green);">↑</div>
+          <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
+        </div>
+        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:#5ab4e8;">↩</div>
+          <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
+        </div>
       </div>
-      <div class="pc-btn-grid2">
-        <button class="pc-zbtn pdf" onclick="openPDFModal(null)">⎙ PDF</button>
-        <button class="pc-zbtn add" onclick="openZavodModal()">+ Zavod</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button class="action-btn" onclick="openZavodModal()">+ Zavod</button>
+        <button class="action-btn" onclick="openPDFModal(null)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
       </div>
     </div>
     <!-- Mobile header -->
