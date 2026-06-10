@@ -496,7 +496,7 @@ function renderHome(){
   empty.style.display='none';
   var out='';
   var sortedZ=data.zavodlar.map(function(z,zi){ var zG=0; z.turlar.forEach(function(t){ zG+=t.ostatka; }); return {z:z,zi:zi,zG:Math.round(zG*100)/100}; });
-  sortedZ.sort(function(a,b){ return Math.abs(b.zG)-Math.abs(a.zG); });
+  sortedZ.sort(function(a,b){ return b.zG-a.zG; });
   sortedZ.forEach(function(item){
     var z=item.z,zi=item.zi,zG=item.zG;
     out+='<div class="zrow" onclick="openZavod('+zi+')">'
