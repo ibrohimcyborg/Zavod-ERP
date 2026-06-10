@@ -676,7 +676,7 @@ function renderZavodHisobot(){
           var op=item.op;
           if(ti>0) out+='<div style="height:1px;background:var(--border);margin:8px 0;"></div>';
           var gti=-1,goi=-1;
-          data.zavodlar[curZ].turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; t.tarix.forEach(function(o,oi){ if(o===op) goi=oi; }); } });
+          data.zavodlar[curZ].turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; for(var oi=0;oi<t.tarix.length;oi++){ var o=t.tarix[oi]; if(o.sana===op.sana&&o.tip===op.tip&&String(o.gramm)===String(op.gramm)&&String(o.jami)===String(op.jami)){ goi=oi; break; } } } });
           out+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
           out+='<div style="font-size:13px;font-weight:600;color:var(--text);">'+item.tur+'</div>';
           out+='<button onclick="event.stopPropagation();openEditModal('+curZ+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
@@ -822,7 +822,10 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter'){
     if(document.getElementById('modal-zavod').classList.contains('open')) saqlashZavod();
     else if(document.getElementById('modal-tur').classList.contains('open')) saqlashTur();
+    else if(document.getElementById('modal-edit').classList.contains('open')) editSaqla();
     else if(document.getElementById('s-kirim').classList.contains('active')) kirimSaqlash();
+    else if(document.getElementById('s-chiqim').classList.contains('active')) chiqimSaqlash();
+    else if(document.getElementById('s-zvozvrat').classList.contains('active')) zvSaqlash();
   }
 });
 
