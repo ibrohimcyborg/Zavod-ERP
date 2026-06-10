@@ -326,6 +326,15 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="card-title">Sana</div>
     <div class="field" style="margin:0;"><input type="date" id="c-sana" style="font-size:16px;"></div>
   </div>
+  <div class="card" id="c-kimga-card" style="display:none;">
+    <div class="card-title">Kimga</div>
+    <div id="c-kimga-list" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="c-kimga-yangi" placeholder="Ism kiriting..." style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;background:var(--surf2);color:var(--text);">
+      <button onclick="kimgaQosh()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surf2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;">+ Qo'sh</button>
+    </div>
+    <input type="hidden" id="c-kimga" value="">
+  </div>
   <div class="card" id="c-turlar-card" style="display:none;">
     <div class="card-title">Turlar — tolov kiriting</div>
     <div id="c-turlar-inputs"></div>
@@ -553,6 +562,7 @@ function renderHisobot(){
           } else if(op.tip==='vozvrat'){
             out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
           } else {
+            if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:3px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>';
             if(op.naqtSumma>0&&op.naqtKurs>0) out+='<div style="font-size:12px;color:var(--muted);">naqt: '+fmtD(op.naqtSumma)+'$ / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(op.naqtGramm)+'g</b></div>';
             if(op.lomGramm>0&&op.lomKurs>0) out+='<div style="font-size:12px;color:var(--muted);">lom: '+fmtG(op.lomGramm)+'g × '+op.lomKurs+'$/g = '+fmtD(op.lomPul)+'$'+(op.naqtKurs>0?' / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(Math.round(op.lomPul/op.naqtKurs*100)/100)+'g</b>':'')+'</div>';
             out+='<div style="font-size:12px;color:var(--green);margin-top:3px;font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
@@ -686,7 +696,7 @@ function renderZavodHisobot(){
           out+='</div>';
           if(isK){ var kGcolor2=op.gramm>0?'var(--red)':'var(--green)'; out+='<div style="font-size:12px;color:'+kGcolor2+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>'; }
           else if(isV) out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
-          else out+='<div style="font-size:12px;color:var(--green);font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
+          else { if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>'; out+='<div style="font-size:12px;color:var(--green);font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>'; }
         });
         out+='</div>';
       }
@@ -739,6 +749,49 @@ function kirimSaqlash(){
   save(); goTo('s-home');
 }
 
+// ── KIMGA ────────────────────────────────────────────────────────────────────
+var _kimgaZavod='';
+var kimgalar=[];
+function kimgaZavodSet(znom){
+  _kimgaZavod=znom;
+  var all=JSON.parse(localStorage.getItem('tilla-kimgalar-v2')||'{}');
+  kimgalar=all[znom]||[];
+}
+function kimgaSaqla(){
+  var all=JSON.parse(localStorage.getItem('tilla-kimgalar-v2')||'{}');
+  all[_kimgaZavod]=kimgalar;
+  localStorage.setItem('tilla-kimgalar-v2',JSON.stringify(all));
+}
+function kimgaRender(){
+  var cont=document.getElementById('c-kimga-list'); if(!cont) return;
+  var sel=document.getElementById('c-kimga').value;
+  var html='';
+  kimgalar.forEach(function(nom,i){
+    var isActive=sel===nom;
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;border:1.5px solid '+(isActive?'var(--gold)':'var(--border)')+';margin-bottom:6px;cursor:pointer;background:var(--surf2);" onclick="kimgaTanla('+i+')">'
+      +'<div style="flex:1;font-size:14px;font-weight:'+(isActive?'600':'400')+';color:var(--text);">'+nom+(isActive?' ✓':'')+'</div>'
+      +'<button onclick="event.stopPropagation();kimgaOchir('+i+')" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px;">✕</button>'
+      +'</div>';
+  });
+  cont.innerHTML=html;
+}
+function kimgaTanla(i){
+  document.getElementById('c-kimga').value=kimgalar[i];
+  kimgaRender();
+}
+function kimgaQosh(){
+  var el=document.getElementById('c-kimga-yangi');
+  var nom=el.value.trim(); if(!nom) return;
+  if(!kimgalar.includes(nom)){ kimgalar.push(nom); kimgaSaqla(); }
+  document.getElementById('c-kimga').value=nom;
+  el.value=''; kimgaRender();
+}
+function kimgaOchir(i){
+  if(!confirm(kimgalar[i]+" ni ochirasizmi?")) return;
+  if(document.getElementById('c-kimga').value===kimgalar[i]) document.getElementById('c-kimga').value='';
+  kimgalar.splice(i,1); kimgaSaqla(); kimgaRender();
+}
+
 // ── CHIQIM ────────────────────────────────────────────────────────────────────
 function initChiqim(){
   var sanaEl=document.getElementById('c-sana');
@@ -747,11 +800,16 @@ function initChiqim(){
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
   document.getElementById('c-turlar-card').style.display='none';
+  document.getElementById('c-kimga-card').style.display='none';
+  document.getElementById('c-kimga').value='';
+  var yn=document.getElementById('c-kimga-yangi'); if(yn) yn.value='';
 }
 function cZavodChange(){
   var zi=parseInt(document.getElementById('c-zavod').value);
   var card=document.getElementById('c-turlar-card');
-  if(isNaN(zi)||!data.zavodlar[zi]||!data.zavodlar[zi].turlar.length){ card.style.display='none'; return; }
+  var kcard=document.getElementById('c-kimga-card');
+  if(isNaN(zi)||!data.zavodlar[zi]||!data.zavodlar[zi].turlar.length){ card.style.display='none'; kcard.style.display='none'; return; }
+  kimgaZavodSet(data.zavodlar[zi].nom); kcard.style.display='block'; kimgaRender();
   card.style.display='block';
   var out='';
   data.zavodlar[zi].turlar.forEach(function(t,ti){
@@ -806,7 +864,8 @@ function chiqimSaqlash(){
     var lomGEq=(lG>0&&lK>0&&nK>0)?roundG(lPul/nK):0;
     var totalG=nG+lomGEq;
     t.ostatka=Math.round((t.ostatka-totalG)*100)/100;
-    t.tarix.push({tip:'tolov',sana:sana,naqtSumma:nS,naqtGramm:nG,naqtKurs:nK,lomGramm:lG,lomKurs:lK,lomPul:lPul,lomGEq:lomGEq,jami:totalG});
+    var kimga=document.getElementById('c-kimga').value.trim();
+    t.tarix.push({tip:'tolov',sana:sana,kimga:kimga,naqtSumma:nS,naqtGramm:nG,naqtKurs:nK,lomGramm:lG,lomKurs:lK,lomPul:lPul,lomGEq:lomGEq,jami:totalG});
     any=true;
   }
   if(!any){ alert('Tolov kiriting!'); return; }
