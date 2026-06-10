@@ -11,8 +11,8 @@
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
-:root{--bg:#0f0f0f;--surf:#1a1a1a;--surf2:#242424;--border:#2a2a2a;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ede6;--muted:#666;--red:#e05a5a;--green:#5ab87a;--r:14px;--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);}
-[data-theme="light"]{--bg:#f7f7f5;--surf:#ffffff;--surf2:#f2f1ee;--border:#e8e5de;--text:#1a1a1a;--muted:#888;--gold:#a07830;--gold2:#b89040;--red:#d04040;--green:#3a9060;}[data-theme="light"] .big-btn.kirim{background:#fde8e8;border-color:#f5c0c0;}[data-theme="light"] .big-btn.chiqim{background:#e8f5e8;border-color:#c0f0c0;}[data-theme="light"] .big-btn{border-color:#e0ddd4;}[data-theme="light"] .big-btn.vozvrat{background:#e8f2f8;border-color:#b0d0e8;}
+:root{--bg:#0f0f0f;--surf:#1a1a1a;--surf2:#242424;--border:#2a2a2a;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0ede6;--muted:#666;--red:#e05a5a;--green:#5ab87a;--blue:#5ab4e8;--blue-bg:#0f1a1f;--blue-border:#1e3a4a;--r:14px;--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);}
+[data-theme="light"]{--bg:#f7f7f5;--surf:#ffffff;--surf2:#f2f1ee;--border:#e8e5de;--text:#1a1a1a;--muted:#888;--gold:#a07830;--gold2:#b89040;--red:#d04040;--green:#3a9060;--blue:#1a7ab8;--blue-bg:#e8f2f8;--blue-border:#b0d0e8;}[data-theme="light"] .big-btn.kirim{background:#fde8e8;border-color:#f5c0c0;}[data-theme="light"] .big-btn.chiqim{background:#e8f5e8;border-color:#c0f0c0;}[data-theme="light"] .big-btn{border-color:#e0ddd4;}[data-theme="light"] .big-btn.vozvrat{background:#e8f2f8;border-color:#b0d0e8;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;padding-bottom:calc(20px + var(--safe-bot));-webkit-font-smoothing:antialiased;overscroll-behavior-y:none;}
 .topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:0 16px;padding-top:var(--safe-top);height:calc(54px + var(--safe-top));display:flex;align-items:flex-end;padding-bottom:10px;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -117,7 +117,7 @@ input[type=number]{-moz-appearance:textfield;}
   .pc-zbtn:active{opacity:.75;}
   .pc-zbtn.kirim{background:#0a1a0a;border-color:#1e4a1e;color:var(--green);}
   .pc-zbtn.chiqim{background:#1a0a0a;border-color:#4a1e1e;color:var(--red);}
-  .pc-zbtn.vozvrat{background:#0a121a;border-color:#1e2a4a;color:#5ab4e8;}
+  .pc-zbtn.vozvrat{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);}
   .pc-zbtn.pdf{background:var(--surf2);border-color:#3a2a0a;color:var(--gold);}
   .pc-zbtn.add{background:var(--surf2);border-color:var(--border);color:var(--muted);}
   .pc-panel-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
@@ -186,9 +186,9 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="big-btn-icon" style="font-size:20px;color:var(--green);">↑</div>
           <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
         </div>
-        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
-          <div class="big-btn-icon" style="font-size:20px;color:#5ab4e8;">↩</div>
-          <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
+        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:var(--blue-bg);border-color:var(--blue-border);padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:var(--blue);">↩</div>
+          <div class="big-btn-label" style="font-size:14px;color:var(--blue);">Vozvrat</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -210,9 +210,9 @@ input[type=number]{-moz-appearance:textfield;}
           <div class="big-btn-icon" style="font-size:20px;color:var(--green);">↑</div>
           <div class="big-btn-label" style="font-size:14px;">Chiqim</div>
         </div>
-        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:#0f1a1f;border-color:#1e3a4a;padding:14px 10px;">
-          <div class="big-btn-icon" style="font-size:20px;color:#5ab4e8;">↩</div>
-          <div class="big-btn-label" style="font-size:14px;color:#5ab4e8;">Vozvrat</div>
+        <div class="big-btn vozvrat" onclick="goTo('s-zvozvrat')" style="background:var(--blue-bg);border-color:var(--blue-border);padding:14px 10px;">
+          <div class="big-btn-icon" style="font-size:20px;color:var(--blue);">↩</div>
+          <div class="big-btn-label" style="font-size:14px;color:var(--blue);">Vozvrat</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -305,7 +305,7 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
   <div class="btn-row">
     <button class="btn" onclick="goTo('s-home')">Bekor</button>
-    <button class="btn" style="background:#0f1a1f;color:#5ab4e8;border-color:#1e3a4a;" onclick="zvSaqlash()">✓ Saqlash</button>
+    <button class="btn" style="background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border);" onclick="zvSaqlash()">✓ Saqlash</button>
   </div>
 </div>
 
@@ -628,7 +628,7 @@ function renderHisobot(){
       var jamiG=0;
       g.turlar.forEach(function(item){ if(item.op.tip==='mol'||item.op.tip==='vozvrat') jamiG+=item.op.gramm; else jamiG+=(item.op.jami||0); });
       jamiG=Math.round(jamiG*100)/100;
-      var bc=isK?'var(--red)':(isV?'#5ab4e8':'var(--green)');
+      var bc=isK?'var(--red)':(isV?'var(--blue)':'var(--green)');
       out+='<div class="hrow" style="border-left:3px solid '+bc+';cursor:pointer;margin-bottom:8px;" onclick="toggleHrow('+idx+')">';
       out+='<div style="display:flex;justify-content:space-between;align-items:center;">';
       out+='<div><div style="font-size:15px;font-weight:700;color:'+bc+';">'+(isK?'↓ Kirim':isV?'↩ Vozvrat':'↑ Chiqim')+'</div>';
@@ -651,7 +651,7 @@ function renderHisobot(){
             var kGcolor=op.gramm>0?'var(--red)':'var(--green)';
             out+='<div style="font-size:12px;color:'+kGcolor+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>';
           } else if(op.tip==='vozvrat'){
-            out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
+            out+='<div style="font-size:12px;color:var(--blue);">−'+fmtG(op.gramm)+' g</div>';
           } else {
             if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:3px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>';
             if(op.naqtSumma>0&&op.naqtKurs>0) out+='<div style="font-size:12px;color:var(--muted);">naqt: '+fmtD(op.naqtSumma)+'$ / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(op.naqtGramm)+'g</b></div>';
@@ -688,7 +688,7 @@ function renderZavod(){
       if(op.tip==='mol'){
         rows+='<div class="trow"><div><span style="color:var(--red);">+ Kirim</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:var(--red);">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+'g</span></div>';
       } else if(op.tip==='vozvrat'){
-        rows+='<div class="trow"><div><span style="color:#5ab4e8;">↩ Vozvrat</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:#5ab4e8;">-'+fmtG(op.gramm)+'g</span></div>';
+        rows+='<div class="trow"><div><span style="color:var(--blue);">↩ Vozvrat</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:var(--blue);">-'+fmtG(op.gramm)+'g</span></div>';
       } else {
         rows+='<div class="trow"><div><span style="color:var(--green);">- Chiqim</span><div class="trow-info">'+op.sana+'</div></div><span style="font-family:Roboto,sans-serif;color:var(--green);">-'+fmtG(op.jami)+'g</span></div>';
       }
@@ -767,7 +767,7 @@ function renderZavodHisobot(){
       var jamiG=0;
       g.turlar.forEach(function(item){ if(item.op.tip==='mol'||item.op.tip==='vozvrat') jamiG+=item.op.gramm; else jamiG+=(item.op.jami||0); });
       jamiG=Math.round(jamiG*100)/100;
-      var bc=isK?'var(--red)':(isV?'#5ab4e8':'var(--green)');
+      var bc=isK?'var(--red)':(isV?'var(--blue)':'var(--green)');
       var jamiColor=isK?(jamiG>0?'var(--red)':'var(--green)'):bc;
       out+='<div class="hrow" style="border-left:3px solid '+bc+';cursor:pointer;margin-bottom:8px;" onclick="toggleZH('+idx+')">';
       out+='<div style="display:flex;justify-content:space-between;align-items:center;">';
@@ -786,7 +786,7 @@ function renderZavodHisobot(){
           out+='<button onclick="event.stopPropagation();openEditModal('+getCurZ()+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
           if(isK){ var kGcolor2=op.gramm>0?'var(--red)':'var(--green)'; out+='<div style="font-size:12px;color:'+kGcolor2+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>'; }
-          else if(isV) out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
+          else if(isV) out+='<div style="font-size:12px;color:var(--blue);">−'+fmtG(op.gramm)+' g</div>';
           else { if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:2px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>'; out+='<div style="font-size:12px;color:var(--green);font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>'; }
         });
         out+='</div>';
@@ -1127,7 +1127,7 @@ function zvZavodChange(){
       +'<div style="font-size:10px;color:var(--muted);margin-top:2px;">ostatka: '+fmtG(t.ostatka)+'g</div></div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">'
       +'<div style="display:flex;align-items:center;gap:6px;">'
-      +'<input type="number" id="zvg-'+ti+'" placeholder="0" oninput="zvCalc('+ti+','+t.ostatka+')" style="width:90px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);font-size:16px;background:var(--surf2);color:#5ab4e8;text-align:right;">'
+      +'<input type="number" id="zvg-'+ti+'" placeholder="0" oninput="zvCalc('+ti+','+t.ostatka+')" style="width:90px;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);font-size:16px;background:var(--surf2);color:var(--blue);text-align:right;">'
       +'<span style="font-size:12px;color:var(--muted);">g</span></div>'
       +'<div id="zvc-'+ti+'" style="font-size:10px;color:var(--green);display:none;">qoladi: <b id="zvr-'+ti+'">0</b>g</div>'
       +'</div></div>';
@@ -1162,10 +1162,7 @@ function applyTheme(t){
     :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+s+'" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
   var allSvgs=document.querySelectorAll('.theme-btn svg, .theme-btn span svg');
   allSvgs.forEach(function(svg){ svg.setAttribute('stroke',s); });
-  document.querySelectorAll('.big-btn.vozvrat').forEach(function(el){
-    if(t==='light'){ el.style.background='#e8f2f8'; el.style.borderColor='#b0d0e8'; }
-    else { el.style.background=''; el.style.borderColor=''; }
-  });
+  // vozvrat colors handled via CSS variables
   localStorage.setItem('tilla-theme',t);
 }
 function toggleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
