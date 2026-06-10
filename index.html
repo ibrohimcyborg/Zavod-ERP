@@ -6,7 +6,8 @@
 <meta name="screen-orientation" content="any">
 <title>Zavod Hisob</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
@@ -173,7 +174,6 @@ input[type=number]{-moz-appearance:textfield;}
 <!-- HOME -->
 <div class="screen active" id="s-home">
   <div id="main-zavod">
-    <!-- PC header -->
     <div class="pc-zavod-hdr">
       <div class="big-stat" style="margin-bottom:10px;">
         <div class="big-stat-label">Jami qoldiq</div>
@@ -198,7 +198,6 @@ input[type=number]{-moz-appearance:textfield;}
         <button class="action-btn" onclick="openPDFModal(null)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
       </div>
     </div>
-    <!-- Mobile header -->
     <div class="mobile-zavod-hdr" style="padding:16px;">
       <div class="big-stat" style="margin-bottom:12px;">
         <div class="big-stat-label">Jami qoldiq</div>
@@ -223,7 +222,6 @@ input[type=number]{-moz-appearance:textfield;}
         <button class="action-btn" onclick="openPDFModal(null)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
       </div>
     </div>
-    <!-- Zavod body -->
     <div class="pc-zavod-body">
       <div class="nav-tabs">
         <div class="nav-tab active" id="ztab-home-zavodlar" onclick="homeTab('zavodlar')">Zavodlar</div>
@@ -250,7 +248,6 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="big-stat-label">Qoldiq</div>
     <div class="big-stat-val" id="zavod-total" style="font-size:32px;">0<span>g</span></div>
   </div>
-
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <button class="action-btn" onclick="openTurModal()">+ Tur</button>
     <button class="action-btn" onclick="openPDFModal(curZ)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
@@ -333,7 +330,7 @@ input[type=number]{-moz-appearance:textfield;}
     <div id="c-kimga-list" style="margin-bottom:10px;"></div>
     <div style="display:flex;gap:8px;">
       <input type="text" id="c-kimga-yangi" placeholder="Ism kiriting..." style="flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;background:var(--surf2);color:var(--text);">
-      <button onclick="kimgaQosh()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surf2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;">+ Qo'sh</button>
+      <button onclick="kimgaQosh()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surf2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;">+ Qosh</button>
     </div>
     <input type="hidden" id="c-kimga" value="">
   </div>
@@ -440,40 +437,99 @@ function doLogin(){
   });
 })();
 
-// ── DATA ──────────────────────────────────────────────────────────────────────
-// ── SUPABASE ─────────────────────────────────────────────────────────────────
-var SB_URL = 'https://vddfj​kofsx​pwfbbrqwhh.supabase.co';
-var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZGZqa29mc3hwd2ZiYnJxd2hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2ODUxMDAsImV4cCI6MjA5NjI2MTEwMH0.TeolFl0NvgaurlrHsHuQa1K2CWxRXL465zJ-EuB8T2k';
-var _sbClient = null;
-function getSB() {
-  if (!_sbClient) _sbClient = supabase.createClient(SB_URL, SB_KEY);
-  return _sbClient;
-}
+// ── FIREBASE ─────────────────────────────────────────────────────────────────
+var firebaseConfig = {
+  apiKey: "AIzaSyA3GQwgDY5cvrAqbe6z_i1qo_YU589d93w",
+  authDomain: "zavod-erp-88cd6.firebaseapp.com",
+  projectId: "zavod-erp-88cd6",
+  storageBucket: "zavod-erp-88cd6.firebasestorage.app",
+  messagingSenderId: "750150823365",
+  appId: "1:750150823365:web:ae71c65d174aea5a12afac"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
 
 var data = JSON.parse(localStorage.getItem('tilla-v2') || '{"zavodlar":[]}');
 if (!data.zavodlar) data.zavodlar = [];
 
-function save() {
-  localStorage.setItem('tilla-v2', JSON.stringify(data));
-  getSB().from('zavod_data').update({data: data, updated_at: new Date().toISOString()}).eq('id','main')
-    .then(function(res){ if(res.error) console.error('Supabase save xato:', res.error); })
-    .catch(function(e){ console.error('Supabase save xato:', e); });
-}
+var _appReady = false;
+var _unsubscribe = null;
 
-function loadFromFirebase(callback) {
-  getSB().from('zavod_data').select('data').eq('id','main').limit(1).maybeSingle()
-    .then(function(res) {
-      if (res.data && res.data.data && res.data.data.zavodlar) {
-        data = res.data.data;
-        if (!data.zavodlar) data.zavodlar = [];
-        localStorage.setItem('tilla-v2', JSON.stringify(data));
+function startListener() {
+  if (_unsubscribe) _unsubscribe();
+
+  // Avval localStorage dan yukla — darhol render
+  var cached = localStorage.getItem('tilla-v2');
+  if (cached) {
+    try {
+      var loc = JSON.parse(cached);
+      if (loc && loc.zavodlar) {
+        data = loc;
+        _appReady = true;
+        renderHome();
+        setTimeout(initPC, 150);
       }
-      if (callback) callback();
-    }).catch(function(e) {
-      console.error('Supabase load xato:', e);
-      if (callback) callback();
+    } catch(e) {}
+  }
+
+  // Firebase ulanmasa 4 soniyada ishga tushadi
+  var fallbackTimer = setTimeout(function() {
+    if (!_appReady) {
+      _appReady = true;
+      renderHome();
+      setTimeout(initPC, 150);
+    }
+  }, 4000);
+
+  _unsubscribe = db.collection('zavod-erp').doc('main')
+    .onSnapshot(function(doc) {
+      clearTimeout(fallbackTimer);
+      if (!doc.exists) {
+        if (!_appReady) {
+          _appReady = true;
+          renderHome();
+          setTimeout(initPC, 150);
+        }
+        return;
+      }
+      var fbData = doc.data();
+      if (!fbData || !fbData.zavodlar) return;
+
+      // Firebase dagi ma'lumot localdan yangi bo'lsa qabul qil
+      var fbStr = JSON.stringify(fbData);
+      var localStr = JSON.stringify(data);
+      if (fbStr === localStr) return;
+
+      data = fbData;
+      if (!data.zavodlar) data.zavodlar = [];
+      localStorage.setItem('tilla-v2', JSON.stringify(data));
+
+      if (!_appReady) {
+        _appReady = true;
+        renderHome();
+        setTimeout(initPC, 150);
+      } else {
+        // Boshqa qurilmadan o'zgarish — avtomatik yangilanadi
+        renderHome();
+        if (document.getElementById('s-zavod').classList.contains('active')) renderZavod();
+      }
+    }, function(err) {
+      clearTimeout(fallbackTimer);
+      console.error('onSnapshot xato:', err);
+      if (!_appReady) {
+        _appReady = true;
+        renderHome();
+        setTimeout(initPC, 150);
+      }
     });
 }
+
+function save() {
+  localStorage.setItem('tilla-v2', JSON.stringify(data));
+  db.collection('zavod-erp').doc('main').set(data)
+    .catch(function(e){ console.error('Firebase save xato:', e); });
+}
+
 function parseNum(v){ if(!v&&v!==0) return 0; return parseFloat(String(v).replace(/,/g,'.'))||0; }
 function fmtG(g){ var v=parseFloat(g); return (v<0?'-':'')+Math.abs(v).toFixed(2); }
 function fmtD(d){ return parseFloat(d).toLocaleString('en-US',{maximumFractionDigits:2}); }
@@ -597,7 +653,7 @@ function renderHisobot(){
           } else {
             if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:3px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>';
             if(op.naqtSumma>0&&op.naqtKurs>0) out+='<div style="font-size:12px;color:var(--muted);">naqt: '+fmtD(op.naqtSumma)+'$ / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(op.naqtGramm)+'g</b></div>';
-            if(op.lomGramm>0&&op.lomKurs>0) out+='<div style="font-size:12px;color:var(--muted);">lom: '+fmtG(op.lomGramm)+'g × '+op.lomKurs+'$/g = '+fmtD(op.lomPul)+'$'+(op.naqtKurs>0?' / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(Math.round(op.lomPul/op.naqtKurs*100)/100)+'g</b>':'')+'</div>';
+            if(op.lomGramm>0&&op.lomKurs>0) out+='<div style="font-size:12px;color:var(--muted);">lom: '+fmtG(op.lomGramm)+'g x '+op.lomKurs+'$/g = '+fmtD(op.lomPul)+'$'+(op.naqtKurs>0?' / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(Math.round(op.lomPul/op.naqtKurs*100)/100)+'g</b>':'')+'</div>';
             out+='<div style="font-size:12px;color:var(--green);margin-top:3px;font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
           }
         });
@@ -929,8 +985,6 @@ function openEditModal(zi,ti,oi){
   _editZi=zi; _editTi=ti; _editOi=oi;
   var op=data.zavodlar[zi].turlar[ti].tarix[oi];
   var isK=op.tip==='mol';
-  document.getElementById('edit-title').textContent=(isK?'Kirim':'op.tip==="vozvrat"?"Vozvrat":"Chiqim"')+' — '+data.zavodlar[zi].turlar[ti].nom;
-  // Fix title
   document.getElementById('edit-title').textContent=(isK?'Kirim':(op.tip==='vozvrat'?'Vozvrat':'Chiqim'))+' — '+data.zavodlar[zi].turlar[ti].nom;
   var body='';
   body+='<div class="field"><label>Sana</label><input type="date" id="e-sana" style="font-size:16px;" value="'+(op.sana?op.sana.split('.').reverse().join('-'):'')+'"></div>';
@@ -995,17 +1049,20 @@ function editOchir(){
 // ── RESET ─────────────────────────────────────────────────────────────────────
 function cloudYukla(){
   if(!confirm('Hozirgi qurilmadagi barcha malumotni cloud ga yuklash?')) return;
-  getSB().from('zavod_data').update({data: data, updated_at: new Date().toISOString()}).eq('id','main')
-    .then(function(res){
-      if(res.error){ alert('Xato: '+res.error.message); return; }
-      alert('Cloud ga yuklandi!');
-    }).catch(function(e){ alert('Xato: '+e.message); });
+  db.collection('zavod-erp').doc('main').set(data)
+    .then(function(){ alert('Cloud ga yuklandi!'); })
+    .catch(function(e){ alert('Xato: '+e.message); });
 }
 function openResetModal(){ document.getElementById('modal-reset').classList.add('open'); }
 function doLogout(){ localStorage.removeItem('tilla-auth'); localStorage.removeItem('tilla-rol'); document.cookie='tilla-auth=;max-age=0;path=/'; location.reload(); }
 function cacheOchir(){
   if(confirm('localStorage tozalanadi. Davom etasizmi?')){
-    localStorage.removeItem('tilla-v2'); localStorage.removeItem('tilla-theme'); location.reload(true);
+    localStorage.removeItem('tilla-v2');
+    localStorage.removeItem('tilla-theme');
+    _appReady = false;
+    data = {zavodlar:[]};
+    closeModal('modal-reset');
+    startListener();
   }
 }
 function resetTasdiqlash(){
@@ -1140,10 +1197,7 @@ goTo=function(id){
 };
 
 // ── STARTUP ───────────────────────────────────────────────────────────────────
-loadFromFirebase(function() {
-  renderHome();
-  setTimeout(initPC,150);
-});
+startListener();
 window.addEventListener('resize',function(){ initPC(); });
 </script>
 </body>
