@@ -576,7 +576,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 // ── RENDER HOME ───────────────────────────────────────────────────────────────
 function renderHome(){
   var tot=0;
-  data.zavodlar.forEach(function(z){ z.turlar.forEach(function(t){ tot+=t.ostatka; }); });
+  data.zavodlar.forEach(function(z){ z.turlar.forEach(function(t){ if(t.ostatka>0) tot+=t.ostatka; }); });
   tot=Math.round(tot*100)/100;
   var g='<span>g</span>';
   document.getElementById('home-total').innerHTML=fmtG(tot)+g;
