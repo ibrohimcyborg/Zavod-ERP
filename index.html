@@ -54,6 +54,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surf);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:22px 20px;padding-bottom:calc(22px + var(--safe-bot));width:100%;max-width:520px;animation:slideUp .25s ease;max-height:90vh;overflow-y:auto;}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
 .modal-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:16px;}
 .empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:14px;line-height:2;}
@@ -86,7 +87,6 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .ctur-field input:focus{outline:none;border-color:var(--gold);}
 .davr-btn{width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;color:var(--text);background:var(--surf2);margin-bottom:8px;text-align:center;}
 .davr-date-row{display:flex;gap:8px;align-items:flex-end;background:var(--surf2);border-radius:12px;padding:12px;border:1.5px solid var(--border);margin-bottom:8px;}
-.ptr-indicator{position:fixed;top:-60px;left:50%;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;background:var(--surf);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;z-index:999;}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;}
 
@@ -104,7 +104,6 @@ input[type=number]{-moz-appearance:textfield;}
 }
 
 @media(min-width:1024px){
-  .ptr-indicator{display:none!important;}
   body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
   .topbar{max-width:100%;padding-left:24px;padding-right:24px;}
   #s-home.active{display:flex!important;flex-direction:row;padding:0;max-width:100%;margin:0;flex:1;overflow:hidden;}
@@ -160,11 +159,10 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
-<div class="ptr-indicator" id="ptr-indicator">↓</div>
-
 <div class="topbar">
   <div class="logo">⬡ ZAVOD HISOB</div>
   <div class="topbar-right">
+    <button class="theme-btn" onclick="doRefresh()" id="refresh-btn" aria-label="Yangilash" style="border-radius:8px;"><svg id="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Tema" style="border-radius:8px;"><span id="theme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
     <button class="theme-btn" onclick="openResetModal()" aria-label="Sozlamalar" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <button class="theme-btn" onclick="doLogout()" aria-label="Chiqish" style="border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
@@ -250,7 +248,7 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <button class="action-btn" onclick="openTurModal()">+ Tur</button>
-    <button class="action-btn" onclick="openPDFModal(curZ)" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
+    <button class="action-btn" onclick="openPDFModal(getCurZ())" style="border-color:#4a2a4a;color:#c084c0;">⎙ PDF</button>
   </div>
   <div class="nav-tabs">
     <div class="nav-tab active" id="ztab-turlar" onclick="zTab('turlar')">Turlar</div>
@@ -465,6 +463,7 @@ function startListener() {
       var loc = JSON.parse(cached);
       if (loc && loc.zavodlar) {
         data = loc;
+        data.zavodlar.forEach(function(z){ if(!z._id) z._id='z'+Date.now()+''+Math.floor(Math.random()*9999); });
         _appReady = true;
         renderHome();
         setTimeout(initPC, 150);
@@ -502,6 +501,7 @@ function startListener() {
 
       data = fbData;
       if (!data.zavodlar) data.zavodlar = [];
+      data.zavodlar.forEach(function(z){ if(!z._id) z._id='z'+Date.now()+''+Math.floor(Math.random()*9999); });
       localStorage.setItem('tilla-v2', JSON.stringify(data));
 
       if (!_appReady) {
@@ -538,7 +538,9 @@ function roundG(v){ var t=Math.floor(v*1000)%10; return t>=5?Math.ceil(v*100)/10
 function nowDate(){ var n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
-var curZ=-1, openTurIdx=-1, curHomeTab='zavodlar', curZTab='turlar';
+var curZId=null, openTurIdx=-1, curHomeTab='zavodlar', curZTab='turlar';
+function getCurZ(){ if(curZId===null) return -1; return data.zavodlar.findIndex(function(z){ return z._id===curZId; }); }
+function setCurZ(v){ if(v<0||v===null||v===undefined){ curZId=null; return; } if(data.zavodlar[v]) curZId=data.zavodlar[v]._id; }
 
 function goTo(id){
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
@@ -598,7 +600,7 @@ function renderHome(){
   if(curHomeTab==='hisobot') renderHisobot();
 }
 
-function openZavod(zi){ curZ=zi; openTurIdx=-1; curZTab='turlar'; goTo('s-zavod'); zTab('turlar'); }
+function openZavod(zi){ setCurZ(zi); openTurIdx=-1; curZTab='turlar'; goTo('s-zavod'); zTab('turlar'); }
 
 // ── HISOBOT ───────────────────────────────────────────────────────────────────
 function renderHisobot(){
@@ -669,7 +671,7 @@ function renderHisobot(){
 
 // ── ZAVOD DETAIL ──────────────────────────────────────────────────────────────
 function renderZavod(){
-  var z=data.zavodlar[curZ]; if(!z) return;
+  var z=data.zavodlar[getCurZ()]; if(!z) return;
   document.getElementById('zavod-title').textContent=z.nom;
   var bizda=0; z.turlar.forEach(function(t){ bizda+=t.ostatka; });
   bizda=Math.round(bizda*100)/100;
@@ -709,7 +711,7 @@ function renderZavod(){
 function toggleTur(ti){ openTurIdx=openTurIdx===ti?-1:ti; renderZavod(); }
 
 function turNomTahrir(ti){
-  var t=data.zavodlar[curZ].turlar[ti];
+  var t=data.zavodlar[getCurZ()].turlar[ti];
   var yangi=prompt("Tur nomi:",t.nom);
   if(yangi===null) return;
   yangi=yangi.trim();
@@ -718,15 +720,15 @@ function turNomTahrir(ti){
 }
 
 function ochirTur(ti){
-  var t=data.zavodlar[curZ].turlar[ti];
+  var t=data.zavodlar[getCurZ()].turlar[ti];
   if(!confirm('"'+t.nom+'" turini ochirmoqchimisiz?')) return;
   if(!confirm("Haqiqatan ham?")) return;
-  data.zavodlar[curZ].turlar.splice(ti,1);
+  data.zavodlar[getCurZ()].turlar.splice(ti,1);
   openTurIdx=-1; save(); renderZavod();
 }
 
 function zavodNomTahrir(){
-  var z=data.zavodlar[curZ]; if(!z) return;
+  var z=data.zavodlar[getCurZ()]; if(!z) return;
   var yangi=prompt("Zavod nomi:",z.nom);
   if(yangi===null) return;
   yangi=yangi.trim();
@@ -737,14 +739,14 @@ function zavodNomTahrir(){
 }
 
 function ochirZavod(){
-  var z=data.zavodlar[curZ]; if(!z) return;
+  var z=data.zavodlar[getCurZ()]; if(!z) return;
   if(!confirm(z.nom+" zavodini ochirmoqchimisiz?")) return;
   if(!confirm("Haqiqatan ham?")) return;
-  data.zavodlar.splice(curZ,1); save(); goTo('s-home');
+  data.zavodlar.splice(getCurZ(),1); save(); goTo('s-home');
 }
 
 function renderZavodHisobot(){
-  var z=data.zavodlar[curZ];
+  var z=data.zavodlar[getCurZ()];
   var cont=document.getElementById('zavod-hisobot-cont');
   var allOps=[];
   z.turlar.forEach(function(t){ t.tarix.forEach(function(op){ allOps.push({tur:t.nom,op:op}); }); });
@@ -778,10 +780,10 @@ function renderZavodHisobot(){
           var op=item.op;
           if(ti>0) out+='<div style="height:1px;background:var(--border);margin:8px 0;"></div>';
           var gti=-1,goi=-1;
-          data.zavodlar[curZ].turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; for(var oi=0;oi<t.tarix.length;oi++){ var o=t.tarix[oi]; if(o.sana===op.sana&&o.tip===op.tip&&String(o.gramm)===String(op.gramm)&&String(o.jami)===String(op.jami)){ goi=oi; break; } } } });
+          data.zavodlar[getCurZ()].turlar.forEach(function(t,tii){ if(t.nom===item.tur){ gti=tii; for(var oi=0;oi<t.tarix.length;oi++){ var o=t.tarix[oi]; if(o.sana===op.sana&&o.tip===op.tip&&String(o.gramm)===String(op.gramm)&&String(o.jami)===String(op.jami)){ goi=oi; break; } } } });
           out+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
           out+='<div style="font-size:13px;font-weight:600;color:var(--text);">'+item.tur+'</div>';
-          out+='<button onclick="event.stopPropagation();openEditModal('+curZ+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
+          out+='<button onclick="event.stopPropagation();openEditModal('+getCurZ()+','+gti+','+goi+')" style="background:var(--surf2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;">✏ Tahrir</button>';
           out+='</div>';
           if(isK){ var kGcolor2=op.gramm>0?'var(--red)':'var(--green)'; out+='<div style="font-size:12px;color:'+kGcolor2+';">'+(op.gramm>0?'+':'')+fmtG(op.gramm)+' g</div>'; }
           else if(isV) out+='<div style="font-size:12px;color:#5ab4e8;">−'+fmtG(op.gramm)+' g</div>';
@@ -803,7 +805,7 @@ function initKirim(){
   var sel=document.getElementById('k-zavod');
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
-  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; kZavodChange(); }
+  if(getCurZ()>=0&&data.zavodlar[getCurZ()]){ sel.value=getCurZ(); kZavodChange(); }
   else { sel.value=''; document.getElementById('k-turlar-card').style.display='none'; document.getElementById('k-turlar-inputs').innerHTML=''; }
 }
 function kZavodChange(){
@@ -889,7 +891,7 @@ function initChiqim(){
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
   document.getElementById('c-kimga').value='';
   var yn=document.getElementById('c-kimga-yangi'); if(yn) yn.value='';
-  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; cZavodChange(); }
+  if(getCurZ()>=0&&data.zavodlar[getCurZ()]){ sel.value=getCurZ(); cZavodChange(); }
   else { document.getElementById('c-turlar-card').style.display='none'; document.getElementById('c-kimga-card').style.display='none'; }
 }
 function cZavodChange(){
@@ -962,9 +964,9 @@ function chiqimSaqlash(){
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function openZavodModal(){ document.getElementById('zavod-nom').value=''; document.getElementById('modal-zavod').classList.add('open'); setTimeout(function(){ document.getElementById('zavod-nom').focus(); },100); }
-function openTurModal(){ document.getElementById('tur-modal-title').textContent='Tur qoshish — '+(data.zavodlar[curZ]?data.zavodlar[curZ].nom:''); document.getElementById('tur-nom').value=''; document.getElementById('modal-tur').classList.add('open'); setTimeout(function(){ document.getElementById('tur-nom').focus(); },100); }
-function saqlashZavod(){ var nom=document.getElementById('zavod-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} data.zavodlar.push({nom:nom,turlar:[]}); save(); closeModal('modal-zavod'); renderHome(); }
-function saqlashTur(){ var nom=document.getElementById('tur-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} data.zavodlar[curZ].turlar.push({nom:nom,ostatka:0,tarix:[]}); save(); closeModal('modal-tur'); renderZavod(); }
+function openTurModal(){ document.getElementById('tur-modal-title').textContent='Tur qoshish — '+(data.zavodlar[getCurZ()]?data.zavodlar[getCurZ()].nom:''); document.getElementById('tur-nom').value=''; document.getElementById('modal-tur').classList.add('open'); setTimeout(function(){ document.getElementById('tur-nom').focus(); },100); }
+function saqlashZavod(){ var nom=document.getElementById('zavod-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} var newId='z'+Date.now()+''+Math.floor(Math.random()*9999); data.zavodlar.push({_id:newId,nom:nom,turlar:[]}); save(); closeModal('modal-zavod'); renderHome(); }
+function saqlashTur(){ var nom=document.getElementById('tur-nom').value.trim(); if(!nom){alert('Nom kiriting!');return;} data.zavodlar[getCurZ()].turlar.push({nom:nom,ostatka:0,tarix:[]}); save(); closeModal('modal-tur'); renderZavod(); }
 
 document.addEventListener('wheel',function(e){ if(document.activeElement&&document.activeElement.type==='number') document.activeElement.blur(); },{passive:true});
 document.querySelectorAll('.modal-overlay').forEach(function(el){ el.addEventListener('click',function(e){ if(e.target===el) el.classList.remove('open'); }); });
@@ -1110,7 +1112,7 @@ function zvInit(){
   var sel=document.getElementById('zv-zavod');
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
-  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; zvZavodChange(); }
+  if(getCurZ()>=0&&data.zavodlar[getCurZ()]){ sel.value=getCurZ(); zvZavodChange(); }
   else { document.getElementById('zv-turlar-card').style.display='none'; }
 }
 function zvZavodChange(){
@@ -1169,14 +1171,15 @@ function applyTheme(t){
 function toggleTheme(){ applyTheme(currentTheme==='dark'?'light':'dark'); }
 applyTheme(currentTheme);
 
-// ── PULL TO REFRESH ───────────────────────────────────────────────────────────
-(function(){
-  var startY=0,curY=0,pulling=false,threshold=80;
-  var ind=document.getElementById('ptr-indicator');
-  document.addEventListener('touchstart',function(e){startY=e.touches[0].pageY;pulling=(window.pageYOffset===0);},{passive:true});
-  document.addEventListener('touchmove',function(e){if(!pulling)return;curY=e.touches[0].pageY;var dy=Math.min(curY-startY,120);if(dy>15){ind.style.top=Math.min(dy*0.5,60)+'px';ind.style.opacity=Math.min(dy/threshold,1);ind.textContent=dy>threshold?'↻':'↓';}},{passive:true});
-  document.addEventListener('touchend',function(e){if(!pulling)return;pulling=false;var dy=curY-startY;if(dy>threshold){ind.textContent='↻';setTimeout(function(){location.reload();},400);}else{ind.style.top='-60px';ind.style.opacity='0';}},{passive:true});
-})();
+// ── REFRESH ───────────────────────────────────────────────────────────────────
+function doRefresh(){
+  var ico=document.getElementById('refresh-icon');
+  if(ico) ico.style.animation='spin 0.7s linear';
+  _appReady=false;
+  data={zavodlar:[]};
+  startListener();
+  setTimeout(function(){ if(ico) ico.style.animation=''; },800);
+}
 
 // ── PC LAYOUT ─────────────────────────────────────────────────────────────────
 function isPCMode(){ return window.innerWidth>=1024; }
