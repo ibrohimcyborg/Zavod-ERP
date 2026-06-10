@@ -882,6 +882,7 @@ function editSaqla(){
   op.sana=newSana;
   save(); closeModal('modal-edit'); renderHome();
   if(curHomeTab==='hisobot') renderHisobot();
+  if(document.getElementById('s-zavod').classList.contains('active')) renderZavodHisobot();
 }
 function editOchir(){
   if(!confirm('Bu operatsiyani ochirmoqchimisiz?')) return;
@@ -894,6 +895,7 @@ function editOchir(){
   t.tarix.splice(oi,1);
   save(); closeModal('modal-edit'); renderHome();
   if(curHomeTab==='hisobot') renderHisobot();
+  if(document.getElementById('s-zavod').classList.contains('active')) renderZavodHisobot();
 }
 
 // ── RESET ─────────────────────────────────────────────────────────────────────
