@@ -714,9 +714,8 @@ function initKirim(){
   var sel=document.getElementById('k-zavod');
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
-  sel.value='';
-  document.getElementById('k-turlar-card').style.display='none';
-  document.getElementById('k-turlar-inputs').innerHTML='';
+  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; kZavodChange(); }
+  else { sel.value=''; document.getElementById('k-turlar-card').style.display='none'; document.getElementById('k-turlar-inputs').innerHTML=''; }
 }
 function kZavodChange(){
   var zi=parseInt(document.getElementById('k-zavod').value);
@@ -799,10 +798,10 @@ function initChiqim(){
   var sel=document.getElementById('c-zavod');
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
-  document.getElementById('c-turlar-card').style.display='none';
-  document.getElementById('c-kimga-card').style.display='none';
   document.getElementById('c-kimga').value='';
   var yn=document.getElementById('c-kimga-yangi'); if(yn) yn.value='';
+  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; cZavodChange(); }
+  else { document.getElementById('c-turlar-card').style.display='none'; document.getElementById('c-kimga-card').style.display='none'; }
 }
 function cZavodChange(){
   var zi=parseInt(document.getElementById('c-zavod').value);
@@ -1013,7 +1012,8 @@ function zvInit(){
   var sel=document.getElementById('zv-zavod');
   sel.innerHTML='<option value="">— Tanlang —</option>';
   data.zavodlar.forEach(function(z,i){ sel.innerHTML+='<option value="'+i+'">'+z.nom+'</option>'; });
-  document.getElementById('zv-turlar-card').style.display='none';
+  if(curZ>=0&&data.zavodlar[curZ]){ sel.value=curZ; zvZavodChange(); }
+  else { document.getElementById('zv-turlar-card').style.display='none'; }
 }
 function zvZavodChange(){
   var zi=parseInt(document.getElementById('zv-zavod').value);
