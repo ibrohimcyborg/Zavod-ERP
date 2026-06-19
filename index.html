@@ -425,7 +425,13 @@ function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
   var found=CREDS.find(function(c){return c.login===u&&c.parol===p;});
-  if(found){ setAuth(found.rol); document.getElementById('login-screen').style.display='none'; }
+  if(found){
+    setAuth(found.rol);
+    document.getElementById('login-screen').style.display='none';
+    _appReady = false;
+    data = {zavodlar:[]};
+    startListener();
+  }
   else { document.getElementById('login-err').textContent='Login yoki parol xato!'; }
 }
 (function(){
