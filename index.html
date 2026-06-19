@@ -413,11 +413,14 @@ input[type=number]{-moz-appearance:textfield;}
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 var CREDS = [
   {login:'tilla', parol:'tilla9999', rol:'admin'},
-  {login:'zavod', parol:'zavod9999', rol:'zavod'}
+  {login:'zavod', parol:'zavod9999', rol:'zavod'},
+  {login:'Abdulhamid_7777', parol:'Scoplon2003', rol:'admin2'}
 ];
 function setAuth(rol){ localStorage.setItem('tilla-auth','1'); localStorage.setItem('tilla-rol',rol); document.cookie='tilla-auth=1;max-age=31536000;path=/'; }
 function getAuth(){ return localStorage.getItem('tilla-auth') || document.cookie.indexOf('tilla-auth=1')>=0; }
 function getRol(){ return localStorage.getItem('tilla-rol')||'admin'; }
+function getDataKey(){ return getRol()==='admin2' ? 'tilla-v2-abdulhamid' : 'tilla-v2'; }
+function getFbDoc(){ return getRol()==='admin2' ? 'abdulhamid' : 'main'; }
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
@@ -447,7 +450,7 @@ var firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 
-var data = JSON.parse(localStorage.getItem('tilla-v2') || '{"zavodlar":[]}');
+var data = JSON.parse(localStorage.getItem(getDataKey()) || '{"zavodlar":[]}');
 if (!data.zavodlar) data.zavodlar = [];
 
 var _appReady = false;
@@ -457,7 +460,7 @@ function startListener() {
   if (_unsubscribe) _unsubscribe();
 
   // Avval localStorage dan yukla — darhol render
-  var cached = localStorage.getItem('tilla-v2');
+  var cached = localStorage.getItem(getDataKey());
   if (cached) {
     try {
       var loc = JSON.parse(cached);
@@ -480,7 +483,7 @@ function startListener() {
     }
   }, 4000);
 
-  _unsubscribe = db.collection('zavod-erp').doc('main')
+  _unsubscribe = db.collection('zavod-erp').doc(getFbDoc())
     .onSnapshot(function(doc) {
       clearTimeout(fallbackTimer);
       if (!doc.exists) {
@@ -502,7 +505,7 @@ function startListener() {
       data = fbData;
       if (!data.zavodlar) data.zavodlar = [];
       data.zavodlar.forEach(function(z){ if(!z._id) z._id='z'+Date.now()+''+Math.floor(Math.random()*9999); });
-      localStorage.setItem('tilla-v2', JSON.stringify(data));
+      localStorage.setItem(getDataKey(), JSON.stringify(data));
 
       if (!_appReady) {
         _appReady = true;
@@ -526,8 +529,8 @@ function startListener() {
 
 function save() {
   data._updated = Date.now();
-  localStorage.setItem('tilla-v2', JSON.stringify(data));
-  db.collection('zavod-erp').doc('main').set(data)
+  localStorage.setItem(getDataKey(), JSON.stringify(data));
+  db.collection('zavod-erp').doc(getFbDoc()).set(data)
     .catch(function(e){ console.error('Firebase save xato:', e); });
 }
 
@@ -1072,8 +1075,8 @@ function cloudYukla(){
   var dup=dedupTarix();
   if(dup>0){ alert(dup+' ta dublikat tozalandi. Endi yuklanmoqda...'); }
   data._updated=Date.now();
-  localStorage.setItem('tilla-v2',JSON.stringify(data));
-  db.collection('zavod-erp').doc('main').set(data)
+  localStorage.setItem(getDataKey(),JSON.stringify(data));
+  db.collection('zavod-erp').doc(getFbDoc()).set(data)
     .then(function(){ alert('Cloud ga yuklandi!'); renderHome(); })
     .catch(function(e){ alert('Xato: '+e.message); });
 }
@@ -1081,7 +1084,7 @@ function openResetModal(){ document.getElementById('modal-reset').classList.add(
 function doLogout(){ localStorage.removeItem('tilla-auth'); localStorage.removeItem('tilla-rol'); document.cookie='tilla-auth=;max-age=0;path=/'; location.reload(); }
 function cacheOchir(){
   if(confirm('localStorage tozalanadi. Davom etasizmi?')){
-    localStorage.removeItem('tilla-v2');
+    localStorage.removeItem(getDataKey());
     localStorage.removeItem('tilla-theme');
     _appReady = false;
     data = {zavodlar:[]};
@@ -1091,7 +1094,7 @@ function cacheOchir(){
 }
 function resetTasdiqlash(){
   if(confirm('BARCHA MALUMOT OCHIRILADI!')){
-    if(confirm('Haqiqatan ham?')){ localStorage.removeItem('tilla-v2'); location.reload(); }
+    if(confirm('Haqiqatan ham?')){ localStorage.removeItem(getDataKey()); location.reload(); }
   }
 }
 
