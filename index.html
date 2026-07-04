@@ -174,7 +174,6 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="screen active" id="s-home">
   <div id="main-zavod">
     <div class="pc-zavod-hdr">
-      <div id="tilla-kassa-panel"></div>
       <div class="big-stat" style="margin-bottom:10px;">
         <div class="big-stat-label">Jami qoldiq</div>
         <div class="big-stat-val" id="home-total" style="font-size:28px;">0<span>g</span></div>
@@ -226,9 +225,11 @@ input[type=number]{-moz-appearance:textfield;}
       <div class="nav-tabs">
         <div class="nav-tab active" id="ztab-home-zavodlar" onclick="homeTab('zavodlar')">Zavodlar</div>
         <div class="nav-tab" id="ztab-home-hisobot" onclick="homeTab('hisobot')">Hisobot</div>
+        <div class="nav-tab" id="ztab-home-kassa" onclick="homeTab('kassa')">Kassa</div>
       </div>
       <div id="home-zavodlar"></div>
       <div id="home-hisobot" style="display:none;"></div>
+      <div id="home-kassa" style="display:none;"><div id="tilla-kassa-panel"></div></div>
       <div class="empty" id="home-empty" style="display:none;"><div class="empty-icon">🏭</div>Hali zavod yoq. "+ Zavod" bosing.</div>
     </div>
   </div>
@@ -495,6 +496,15 @@ function tillaKassaListen(){
     }, function(err){ console.error('kassa snapshot listen:', err); _tSnap=null; renderTillaKassa(); });
 }
 function fmtVaqt(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+function fmtNisbiy(ts){
+  var s = Math.floor((Date.now()-ts)/1000);
+  if(s<0) s=0;
+  if(s<60) return s+' soniya oldin';
+  var m = Math.floor(s/60);
+  if(m<60) return m+' daqiqa oldin';
+  var h = Math.floor(m/60);
+  return h+' soat oldin';
+}
 function renderTillaKassa(){
   var el = document.getElementById('tilla-kassa-panel');
   if(!el) return;
@@ -519,7 +529,9 @@ function renderTillaKassa(){
   var h = '<div style="background:var(--surf);border:1px solid var(--gold);border-top:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:10px;">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
   h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — jonli</span>';
-  h += '<span style="font-size:10px;color:var(--muted);"><span style="color:var(--green);">●</span> yangilangan: '+fmtVaqt(s.vaqt)+'</span>';
+  var _yosh = Math.floor((Date.now()-s.vaqt)/1000);
+  var _dotRang = _yosh<120 ? 'var(--green)' : (_yosh<1800 ? '#e8b84c' : 'var(--red)');
+  h += '<span style="font-size:10px;color:var(--muted);"><span style="color:'+_dotRang+';">●</span> '+fmtVaqt(s.vaqt)+' · <span id="tk-nisbiy">'+fmtNisbiy(s.vaqt)+'</span></span>';
   h += '</div>';
   // zakaz bannerlari
   (s.zakazlar||[]).forEach(function(z){
@@ -541,7 +553,12 @@ function renderTillaKassa(){
   h += '</div></div>';
   el.innerHTML = h;
 }
-setInterval(function(){ if(_tSnap) renderTillaKassa(); }, 60000); // banner sanog'i yangilanib tursin
+setInterval(function(){
+  if(!_tSnap) return;
+  var el = document.getElementById('tk-nisbiy');
+  if(el) el.textContent = fmtNisbiy(_tSnap.vaqt); // har soniya "X soniya oldin"
+}, 1000);
+setInterval(function(){ if(_tSnap) renderTillaKassa(); }, 60000); // bannerlar/nuqta rangi yangilanib tursin
 tillaKassaInit();
 
 var data = JSON.parse(localStorage.getItem(getDataKey()) || '{"zavodlar":[]}');
@@ -654,9 +671,12 @@ function homeTab(tab){
   curHomeTab=tab;
   document.getElementById('ztab-home-zavodlar').classList.toggle('active',tab==='zavodlar');
   document.getElementById('ztab-home-hisobot').classList.toggle('active',tab==='hisobot');
+  var ktb=document.getElementById('ztab-home-kassa'); if(ktb) ktb.classList.toggle('active',tab==='kassa');
   document.getElementById('home-zavodlar').style.display=tab==='zavodlar'?'block':'none';
   document.getElementById('home-hisobot').style.display=tab==='hisobot'?'block':'none';
+  var kc=document.getElementById('home-kassa'); if(kc) kc.style.display=tab==='kassa'?'block':'none';
   if(tab==='hisobot') renderHisobot();
+  if(tab==='kassa') renderTillaKassa();
 }
 
 function zTab(tab){
