@@ -8,6 +8,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Outfit:wght@400;500;600&display=swap');
@@ -173,6 +174,7 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="screen active" id="s-home">
   <div id="main-zavod">
     <div class="pc-zavod-hdr">
+      <div id="tilla-kassa-panel"></div>
       <div class="big-stat" style="margin-bottom:10px;">
         <div class="big-stat-label">Jami qoldiq</div>
         <div class="big-stat-val" id="home-total" style="font-size:28px;">0<span>g</span></div>
@@ -455,6 +457,92 @@ var firebaseConfig = {
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
+
+// ── TILLA KASSA ULANISHI (alohida app instansi — 8b357; zavod ERP o'z bazasi 88cd6 da qolaveradi) ──
+var TILLA_CONFIG = {
+  apiKey: "AIzaSyAfZ45TmFvDRIOos19eG8msyiDFTJuc0PE",
+  authDomain: "tilla-erp-8b357.firebaseapp.com",
+  projectId: "tilla-erp-8b357",
+  storageBucket: "tilla-erp-8b357.firebasestorage.app",
+  messagingSenderId: "876933095476",
+  appId: "1:876933095476:web:a9fbf2c66fb496be0baa61"
+};
+var _tApp = null, _tDb = null, _tUser = null, _tUnsub = null, _tSnap = null;
+function tillaKassaInit(){
+  try {
+    _tApp = firebase.apps.find(function(a){return a.name==='tilla';}) || firebase.initializeApp(TILLA_CONFIG, 'tilla');
+    _tDb = _tApp.firestore();
+    _tApp.auth().onAuthStateChanged(function(u){
+      _tUser = u;
+      if (u) tillaKassaListen(); else { if(_tUnsub){_tUnsub();_tUnsub=null;} _tSnap=null; renderTillaKassa(); }
+    });
+  } catch(e){ console.error('tillaKassaInit:', e); }
+}
+function tillaKassaUlan(){
+  var em = (document.getElementById('tk-email')||{}).value||'';
+  var pa = (document.getElementById('tk-parol')||{}).value||'';
+  if(!em.trim()||!pa){ alert('Tilla ERP email va parolini kiriting'); return; }
+  _tApp.auth().signInWithEmailAndPassword(em.trim(), pa).catch(function(e){
+    alert('Ulanish xatosi: '+(e.message||e.code));
+  });
+}
+function tillaKassaListen(){
+  if(_tUnsub) _tUnsub();
+  _tUnsub = _tDb.collection('tilla_'+_tUser.uid).doc('kassa_snapshot')
+    .onSnapshot(function(doc){
+      _tSnap = doc.exists ? doc.data() : null;
+      renderTillaKassa();
+    }, function(err){ console.error('kassa snapshot listen:', err); _tSnap=null; renderTillaKassa(); });
+}
+function fmtVaqt(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+function renderTillaKassa(){
+  var el = document.getElementById('tilla-kassa-panel');
+  if(!el) return;
+  // Ulanmagan — kirish formasi
+  if(!_tUser){
+    el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
+      +'<div style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;margin-bottom:8px;">TILLA KASSA — ulanish</div>'
+      +'<input type="email" id="tk-email" placeholder="Tilla ERP email" autocomplete="username" style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-size:14px;background:var(--surf2);color:var(--text);box-sizing:border-box;margin-bottom:6px;">'
+      +'<input type="password" id="tk-parol" placeholder="Parol" autocomplete="current-password" style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-size:14px;background:var(--surf2);color:var(--text);box-sizing:border-box;margin-bottom:8px;">'
+      +'<button onclick="tillaKassaUlan()" style="width:100%;background:var(--gold);border:none;color:#1a1200;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;">Ulanish</button>'
+      +'</div>';
+    return;
+  }
+  // Ulangan lekin snapshot hali yo'q
+  if(!_tSnap){
+    el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--muted);">TILLA KASSA — kutilmoqda... (Tilla ERP hali snapshot yubormagan; Tilla ERPni ochib bitta amal saqlang)</div>';
+    return;
+  }
+  var s = _tSnap;
+  function cho(l,v,rang,sub){ return '<div style="background:var(--surf2);border-radius:8px;padding:7px 2px;text-align:center;"><div style="font-size:10px;color:var(--muted);">'+l+'</div><div style="font-size:14px;color:'+rang+';font-weight:500;">'+v+'</div>'+(sub||'')+'</div>'; }
+  var naqdSub = (s.band>0) ? '<div style="font-size:10px;margin-top:2px;"><span style="color:var(--green);">erkin $'+fmtD(s.erkin)+'</span> · <span style="color:#5ab4e8;">band $'+fmtD(s.band)+'</span></div>' : '';
+  var h = '<div style="background:var(--surf);border:1px solid var(--gold);border-top:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:10px;">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — jonli</span>';
+  h += '<span style="font-size:10px;color:var(--muted);"><span style="color:var(--green);">●</span> yangilangan: '+fmtVaqt(s.vaqt)+'</span>';
+  h += '</div>';
+  // zakaz bannerlari
+  (s.zakazlar||[]).forEach(function(z){
+    var qoldi = z.muddatTs - Date.now();
+    var d = new Date(z.muddatTs);
+    var mt = String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    if(qoldi < 0) h += '<div style="background:#2a1010;border:1px solid #e05a5a;border-radius:9px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:#e05a5a;font-weight:600;">⚠ MUDDAT O\'TDI — '+mt+'</span><span style="font-size:11px;color:var(--muted);">'+z.zavodNom+' · $'+fmtD(z.summa)+'</span></div>';
+    else if(qoldi < 3600000) h += '<div style="background:#2a1010;border:1px solid #e05a5a;border-radius:9px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:#e05a5a;font-weight:600;">⏱ 1 SOATDAN KAM — '+mt+'</span><span style="font-size:11px;color:var(--muted);">'+z.zavodNom+' · $'+fmtD(z.summa)+' @ '+z.kurs+'</span></div>';
+    else h += '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:var(--text);">Zakaz: '+z.zavodNom+(z.izoh?' · '+z.izoh:'')+'</span><span style="font-size:11px;color:var(--muted);">$'+fmtD(z.summa)+' @ '+z.kurs+' · '+mt+'</span></div>';
+  });
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">';
+  h += cho('Naqd','$'+fmtD(s.naqd),'var(--gold)',naqdSub);
+  h += cho('Lom 583',fmtG(s.lomEkv)+' g','var(--gold)');
+  h += cho('999',fmtG(s.toza)+' g','#5ab4e8');
+  h += '</div>';
+  h += '<div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px;">';
+  h += '<span style="color:var(--muted);">Bugun: <span style="color:var(--green);">+$'+fmtD(s.bugunKirim)+'</span> / <span style="color:var(--red);">−$'+fmtD(s.bugunChiqim)+'</span></span>';
+  h += '<span style="color:var(--muted);">'+(s.z ? 'Z: '+s.z.sana+' · $'+fmtD(s.z.naqd) : 'Z qilinmagan')+'</span>';
+  h += '</div></div>';
+  el.innerHTML = h;
+}
+setInterval(function(){ if(_tSnap) renderTillaKassa(); }, 60000); // banner sanog'i yangilanib tursin
+tillaKassaInit();
 
 var data = JSON.parse(localStorage.getItem(getDataKey()) || '{"zavodlar":[]}');
 if (!data.zavodlar) data.zavodlar = [];
