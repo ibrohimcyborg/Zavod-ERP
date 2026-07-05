@@ -475,7 +475,7 @@ function tillaKassaInit(){
     _tDb = _tApp.firestore();
     _tApp.auth().onAuthStateChanged(function(u){
       _tUser = u;
-      if (u) tillaKassaListen(); else { if(_tUnsub){_tUnsub();_tUnsub=null;} _tSnap=null; renderTillaKassa(); }
+      if (u) { tillaKassaListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
     });
   } catch(e){ console.error('tillaKassaInit:', e); }
 }
@@ -547,11 +547,206 @@ function renderTillaKassa(){
   h += cho('Lom 583',fmtG(s.lomEkv)+' g','var(--gold)');
   h += cho('999',fmtG(s.toza)+' g','#5ab4e8');
   h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;">';
+  h += '<button onclick="openBerish()" style="background:var(--red-bg,#f5caca);border:1px solid var(--red,#c84545);color:var(--red,#c84545);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">− Berish (zavodga)</button>';
+  h += '<button onclick="openOlish()" style="background:var(--green-bg,#c8edcf);border:1px solid var(--green,#2e8f56);color:var(--green,#2e8f56);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Sotib olish</button>';
+  h += '</div>';
+  // mening amallarim (bugun) — pending holati bilan
+  var _bugun = today();
+  var mAmal = (_zaCache||[]).filter(function(r){return r.sana===_bugun;}).slice(-4);
+  if(mAmal.length){
+    h += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 5px;">Mening amallarim · bugun</div>';
+    mAmal.forEach(function(r){
+      var ok = (s.importedIds||[]).indexOf(r.id) >= 0;
+      var tx = r.tip==='berish'
+        ? (r.zavodNom||'')+' berish · $'+fmtD(r.pul||0)+(parseFloat(r.lomG)>0?' + '+fmtG(r.lomG)+'g lom':'')+(parseFloat(r.tozaG)>0?' + '+fmtG(r.tozaG)+'g 999':'')
+        : r.proba+' olish · '+fmtG(r.gramm)+'g @ '+r.narx;
+      h += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 8px;background:var(--surf2);border-radius:7px;margin-bottom:4px;align-items:center;">';
+      h += '<span>'+tx+'</span>';
+      h += '<span style="color:'+(ok?'var(--green)':'#e8b84c')+';white-space:nowrap;">'+(ok?'✓ qabul':'⧗ kutilmoqda')+' · '+(r.soat||'')+'</span>';
+      h += '</div>';
+    });
+  }
   h += '<div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px;">';
   h += '<span style="color:var(--muted);">Bugun: <span style="color:var(--green);">+$'+fmtD(s.bugunKirim)+'</span> / <span style="color:var(--red);">−$'+fmtD(s.bugunChiqim)+'</span></span>';
   h += '<span style="color:var(--muted);">'+(s.z ? 'Z: '+s.z.sana+' · $'+fmtD(s.z.naqd) : 'Z qilinmagan')+'</span>';
   h += '</div></div>';
   el.innerHTML = h;
+}
+// ── BERISH / SOTIB OLISH (zavod_amallar hujjatiga yoziladi, Tilla import qiladi) ──
+var _zaCache = [];
+var _zaUnsub2 = null;
+function zaListen(){
+  if(!_tUser || !_tDb) return;
+  if(_zaUnsub2) _zaUnsub2();
+  _zaUnsub2 = _tDb.collection('tilla_'+_tUser.uid).doc('zavod_amallar').onSnapshot(function(doc){
+    _zaCache = doc.exists ? ((doc.data()||{}).amallar||[]) : [];
+    renderTillaKassa();
+  }, function(e){ console.error('zaListen:', e); });
+}
+var _brVals = {pul:'', lom:'', toza:''};
+var _brChip = 'pul';
+var _brZavod = '';
+function _modalHost(){
+  var m = document.getElementById('za-modal-host');
+  if(!m){ m=document.createElement('div'); m.id='za-modal-host'; document.body.appendChild(m); }
+  return m;
+}
+function zaYop(){ var m=document.getElementById('za-modal-host'); if(m) m.innerHTML=''; }
+function fmtBr(v){ return v===''||v===undefined?'—':v; }
+function openBerish(){
+  if(!_tSnap){ alert('Tilla kassa ulanmagan'); return; }
+  _brVals={pul:'',lom:'',toza:''}; _brChip='pul';
+  _brZavod = (_tSnap.zavodlar&&_tSnap.zavodlar[0])?_tSnap.zavodlar[0].nom:'';
+  var zops=''; (_tSnap.zavodlar||[]).forEach(function(z){ zops+='<option value="'+z.nom+'">'+z.nom+'</option>'; });
+  var k583 = _tSnap.kurs583||'';
+  var k999 = k583?Math.round(k583*1.7*100)/100:'';
+  var inp='width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;background:var(--surf2);color:var(--text);box-sizing:border-box;';
+  _modalHost().innerHTML =
+  '<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)zaYop()">'
+  +'<div style="background:var(--surf);border:1px solid var(--border);border-radius:18px;padding:18px 16px;width:100%;max-width:420px;max-height:92vh;overflow-y:auto;">'
+  +'<div style="font-size:16px;font-weight:600;margin-bottom:4px;">Berish — <select id="br-zavod" onchange="_brZavod=this.value" style="'+inp+'width:auto;display:inline-block;padding:6px 10px;font-size:14px;">'+zops+'</select></div>'
+  +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Erkin: <b style="color:var(--green);">$'+fmtD(_tSnap.erkin)+'</b> · lom '+fmtG(_tSnap.lomEkv)+'g · 999 '+fmtG(_tSnap.toza)+'g</div>'
+  +'<div id="br-chips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;"></div>'
+  +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px;" id="br-miq-lbl">Miqdor</div>'
+  +'<input type="number" id="br-miqdor" inputmode="decimal" oninput="brMiqdorYoz(this.value)" style="'+inp+'margin-bottom:10px;">'
+  +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Kurs — birini yozing, ikkinchisi o\'zi to\'ladi</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 44px 1fr;gap:0;align-items:center;margin-bottom:10px;">'
+  +'<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">583 · kunlik</div><input type="number" id="br-k583" value="'+k583+'" inputmode="decimal" oninput="brKurs(583)" style="'+inp+'text-align:center;"></div>'
+  +'<div style="text-align:center;font-size:11px;color:var(--muted);">×1.7<br>⇄</div>'
+  +'<div style="text-align:center;"><div style="font-size:10px;color:#5ab4e8;">999 kursi</div><input type="number" id="br-k999" value="'+k999+'" inputmode="decimal" oninput="brKurs(999)" style="'+inp+'text-align:center;"></div>'
+  +'</div>'
+  +'<div id="br-preview" style="background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;"></div>'
+  +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">'
+  +'<button onclick="zaYop()" style="background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit;">Bekor</button>'
+  +'<button onclick="berishSaqla()" style="background:#a07830;border:none;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Berish</button>'
+  +'</div></div></div>';
+  brChipsChiz(); brPreview();
+}
+function brChipsChiz(){
+  var el=document.getElementById('br-chips'); if(!el) return;
+  var defs=[{k:'pul',l:'Pul $'},{k:'lom',l:'Lom 583'},{k:'toza',l:'999'}];
+  el.innerHTML = defs.map(function(d){
+    var act = _brChip===d.k;
+    var rang = d.k==='toza' ? '#5ab4e8' : '#a07830';
+    return '<div onclick="brChip(\''+d.k+'\')" style="cursor:pointer;border-radius:9px;padding:7px 4px;text-align:center;'+(act?('background:'+rang+';color:#fff;'):'background:var(--surf2);border:1px solid var(--border);color:var(--muted);')+'">'
+      +'<div style="font-size:13px;font-weight:'+(act?'600':'400')+';">'+d.l+'</div>'
+      +'<div style="font-size:11px;'+(act?'':'color:'+(_brVals[d.k]!==''?rang:'var(--muted)')+';')+'">'+fmtBr(_brVals[d.k])+'</div></div>';
+  }).join('');
+  var lbl=document.getElementById('br-miq-lbl');
+  if(lbl) lbl.textContent = 'Miqdor — '+(_brChip==='pul'?'Pul ($)':(_brChip==='lom'?'Lom 583 (gramm)':'999 (gramm)'))+' · chip almashsa yozuv o\'chmaydi'.replace('\\',''); 
+  var mi=document.getElementById('br-miqdor');
+  if(mi) mi.value = _brVals[_brChip];
+}
+function brChip(k){ _brChip=k; brChipsChiz(); brPreview(); }
+function brMiqdorYoz(v){ _brVals[_brChip]=v; brChipsChiz(); brPreview(); }
+function brKurs(qaysi){
+  var e5=document.getElementById('br-k583'), e9=document.getElementById('br-k999');
+  if(!e5||!e9) return;
+  if(qaysi===583){ var v=parseNum(e5.value); e9.value = v>0?Math.round(v*1.7*100)/100:''; }
+  else { var v9=parseNum(e9.value); e5.value = v9>0?Math.round(v9/1.7*100)/100:''; }
+  brPreview();
+}
+function brQiymat(){
+  var p=parseNum(_brVals.pul), l=parseNum(_brVals.lom), t9=parseNum(_brVals.toza);
+  var k5=parseNum((document.getElementById('br-k583')||{}).value);
+  var k9=parseNum((document.getElementById('br-k999')||{}).value);
+  return { p:p, l:l, t9:t9, k5:k5, k9:k9,
+    lPul: Math.round(l*k5*100)/100,
+    tPul: Math.round(t9*k9*100)/100,
+    jami: Math.round((p + l*k5 + t9*k9)*100)/100 };
+}
+function brPreview(){
+  var el=document.getElementById('br-preview'); if(!el||!_tSnap) return;
+  var q=brQiymat();
+  var rows='';
+  if(q.p>0) rows+='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">Pul</span><b style="color:#a07830;">$'+fmtD(q.p)+' @ '+q.k5+'</b></div>';
+  if(q.l>0) rows+='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">Lom 583</span><b style="color:#a07830;">'+fmtG(q.l)+' g @ '+q.k5+' = $'+fmtD(q.lPul)+'</b></div>';
+  if(q.t9>0) rows+='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">999</span><b style="color:#5ab4e8;">'+fmtG(q.t9)+' g @ '+q.k9+' = $'+fmtD(q.tPul)+'</b></div>';
+  if(!rows){ el.innerHTML='<span style="color:var(--muted);">Hech narsa kiritilmagan</span>'; return; }
+  var xato=[];
+  if(q.p > _tSnap.erkin+0.001) xato.push('pul erkindan oshdi');
+  if(q.l > _tSnap.lomEkv+0.001) xato.push('lom yetmaydi');
+  if(q.t9 > _tSnap.toza+0.001) xato.push('999 yetmaydi');
+  rows+='<div style="height:1px;background:var(--border);margin:5px 0;"></div>';
+  rows+='<div style="display:flex;justify-content:space-between;"><b>Jami qiymat</b><b style="color:#a07830;">$'+fmtD(q.jami)+'</b></div>';
+  rows+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-top:3px;"><span style="color:var(--muted);">Qoladi</span><span style="color:var(--muted);">erkin $'+fmtD(Math.round((_tSnap.erkin-q.p)*100)/100)+' · lom '+fmtG(Math.round((_tSnap.lomEkv-q.l)*100)/100)+'g · 999 '+fmtG(Math.round((_tSnap.toza-q.t9)*100)/100)+'g</span></div>';
+  if(xato.length) rows+='<div style="color:var(--red,#c84545);font-size:11px;margin-top:5px;">⚠ '+xato.join(' · ')+'</div>';
+  el.innerHTML=rows;
+}
+function nowSoatZ(){ var n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+function zaYoz(rec, cb){
+  rec.id = 'za'+Date.now()+Math.floor(Math.random()*999);
+  rec.ts = Date.now(); rec.sana = today(); rec.soat = nowSoatZ();
+  _tDb.collection('tilla_'+_tUser.uid).doc('zavod_amallar').set(
+    { amallar: firebase.firestore.FieldValue.arrayUnion(rec) }, { merge: true }
+  ).then(function(){ if(cb) cb(); }).catch(function(e){ alert('Yozishda xato: '+(e.message||e)); });
+}
+function berishSaqla(){
+  var q=brQiymat();
+  var zavod=(document.getElementById('br-zavod')||{}).value||_brZavod;
+  if(!zavod){ alert('Zavod tanlang'); return; }
+  if(q.p<=0 && q.l<=0 && q.t9<=0){ alert('Hech narsa kiritilmagan'); return; }
+  if(q.k5<=0){ alert('Kurs kiriting'); return; }
+  if(q.p > _tSnap.erkin+0.001){ alert('Pul erkindan oshdi! Erkin: $'+fmtD(_tSnap.erkin)); return; }
+  if(q.l > _tSnap.lomEkv+0.001){ alert('Lom yetmaydi! Bor: '+fmtG(_tSnap.lomEkv)+'g'); return; }
+  if(q.t9 > _tSnap.toza+0.001){ alert('999 yetmaydi! Bor: '+fmtG(_tSnap.toza)+'g'); return; }
+  var tafsil=[];
+  if(q.p>0) tafsil.push('$'+fmtD(q.p));
+  if(q.l>0) tafsil.push(fmtG(q.l)+'g lom');
+  if(q.t9>0) tafsil.push(fmtG(q.t9)+'g 999');
+  if(!confirm('BERILSINMI?\n\n'+zavod+' · '+tafsil.join(' + ')+'\nKurs: '+q.k5+' / '+q.k9+'\nJami qiymat: $'+fmtD(q.jami))) return;
+  zaYoz({tip:'berish', zavodNom:zavod, pul:q.p, lomG:q.l, tozaG:q.t9, kurs583:q.k5, kurs999:q.k9, qiymat:q.jami}, function(){
+    zaYop();
+    alert('✓ Yuborildi. Tilla ERP qabul qilganda qoldiq yangilanadi.');
+  });
+}
+function openOlish(){
+  if(!_tSnap){ alert('Tilla kassa ulanmagan'); return; }
+  var inp='width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;background:var(--surf2);color:var(--text);box-sizing:border-box;';
+  _modalHost().innerHTML =
+  '<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)zaYop()">'
+  +'<div style="background:var(--surf);border:1px solid var(--border);border-radius:18px;padding:18px 16px;width:100%;max-width:400px;">'
+  +'<div style="font-size:16px;font-weight:600;margin-bottom:4px;">Sotib olish — lom / 999</div>'
+  +'<div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Erkin pul: <b style="color:var(--green);">$'+fmtD(_tSnap.erkin)+'</b></div>'
+  +'<div style="display:grid;grid-template-columns:90px 1fr;gap:6px;margin-bottom:8px;align-items:center;">'
+  +'<span style="font-size:12px;color:var(--muted);">Proba</span>'
+  +'<select id="ol-proba" onchange="olPreview()" style="'+inp+'"><option value="999">999</option><option value="583">583</option><option value="585">585</option><option value="750">750</option><option value="375">375</option></select></div>'
+  +'<div style="display:grid;grid-template-columns:90px 1fr;gap:6px;margin-bottom:8px;align-items:center;">'
+  +'<span style="font-size:12px;color:var(--muted);">Gramm</span><input type="number" id="ol-gramm" inputmode="decimal" oninput="olPreview()" style="'+inp+'"></div>'
+  +'<div style="display:grid;grid-template-columns:90px 1fr;gap:6px;margin-bottom:10px;align-items:center;">'
+  +'<span style="font-size:12px;color:var(--muted);">Narx $/g</span><input type="number" id="ol-narx" inputmode="decimal" oninput="olPreview()" style="'+inp+'"></div>'
+  +'<div id="ol-preview" style="background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--muted);">Gramm va narx kiriting</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">'
+  +'<button onclick="zaYop()" style="background:var(--surf2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit;">Bekor</button>'
+  +'<button onclick="olishSaqla()" style="background:#2e8f56;border:none;color:#fff;border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Sotib olish</button>'
+  +'</div></div></div>';
+}
+function olPreview(){
+  var el=document.getElementById('ol-preview'); if(!el) return;
+  var g=parseNum((document.getElementById('ol-gramm')||{}).value);
+  var n=parseNum((document.getElementById('ol-narx')||{}).value);
+  var p=(document.getElementById('ol-proba')||{}).value;
+  if(g<=0||n<=0){ el.innerHTML='<span style="color:var(--muted);">Gramm va narx kiriting</span>'; return; }
+  var s=Math.round(g*n*100)/100;
+  var h='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">To\'lanadi</span><b style="color:var(--red,#c84545);">−$'+fmtD(s)+'</b></div>';
+  h+='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">'+(p==='999'?'999':'Lom')+' cho\'ntagi</span><b style="color:#5ab4e8;">+'+fmtG(g)+' g'+(p!=='999'?' (ekv '+fmtG(Math.round(p*g/583*100)/100)+'g)':'')+'</b></div>';
+  h+='<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--muted);">Erkin qoladi</span><b style="color:var(--green);">$'+fmtD(Math.round((_tSnap.erkin-s)*100)/100)+'</b></div>';
+  if(s > _tSnap.erkin+0.001) h+='<div style="color:var(--red,#c84545);font-size:11px;margin-top:4px;">⚠ Erkin puldan oshdi!</div>';
+  el.innerHTML=h;
+}
+function olishSaqla(){
+  var g=parseNum((document.getElementById('ol-gramm')||{}).value);
+  var n=parseNum((document.getElementById('ol-narx')||{}).value);
+  var p=(document.getElementById('ol-proba')||{}).value;
+  if(g<=0||n<=0){ alert('Gramm va narx kiriting'); return; }
+  var s=Math.round(g*n*100)/100;
+  if(s > _tSnap.erkin+0.001){ alert('Erkin puldan oshdi! Erkin: $'+fmtD(_tSnap.erkin)); return; }
+  if(!confirm('SOTIB OLINSINMI?\n\n'+p+' · '+fmtG(g)+'g @ '+n+' = $'+fmtD(s))) return;
+  zaYoz({tip:'olish', proba:p, gramm:g, narx:n, summa:s}, function(){
+    zaYop();
+    alert('✓ Yuborildi. Tilla ERP qabul qilganda qoldiq yangilanadi.');
+  });
 }
 setInterval(function(){
   if(!_tSnap) return;
