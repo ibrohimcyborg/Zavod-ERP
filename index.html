@@ -450,7 +450,11 @@ function setAuth(rol){ localStorage.setItem('tilla-auth','1'); localStorage.setI
 function getAuth(){ return localStorage.getItem('tilla-auth') || document.cookie.indexOf('tilla-auth=1')>=0; }
 function getRol(){ return localStorage.getItem('tilla-rol')||'admin'; }
 function getDataKey(){ return getRol()==='admin2' ? 'tilla-v2-abdulhamid' : 'tilla-v2'; }
-function getFbDoc(){ return getRol()==='admin2' ? 'abdulhamid' : 'main'; }
+function getFbDoc(){
+  var d = getRol()==='admin2' ? 'abdulhamid' : 'main';
+  // TEST rejimida o'z cloudda ham alohida hujjat — haqiqiy 'main' ga tegilmaydi
+  return TEST_MODE ? 'TEST_'+d : d;
+}
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
