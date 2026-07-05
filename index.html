@@ -823,8 +823,10 @@ function olishSaqla(){
 // ── ZAPROS: berilgan, taqsimlanmagan avanslar (manba: zavod_amallar / _zaCache) ──
 function zaprosQoldiq(zavodNom){
   var p=0,l=0,t9=0, recs=[];
+  var bekorIds = (_tSnap && _tSnap.bekorIds) || [];
   (_zaCache||[]).forEach(function(r){
     if(r.tip!=='berish' || r.holat==='bekor' || r.zavodNom!==zavodNom) return;
+    if(bekorIds.indexOf(r.id) >= 0) return; // Tilla'da bekor qilingan — zaprosga kirmaydi
     var rp=Math.max(0, parseNum(r.pul)-parseNum(r.tPul||0));
     var rl=Math.max(0, parseNum(r.lomG)-parseNum(r.tLom||0));
     var rt=Math.max(0, parseNum(r.tozaG)-parseNum(r.tToza||0));
