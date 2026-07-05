@@ -417,7 +417,8 @@ input[type=number]{-moz-appearance:textfield;}
 var CREDS = [
   {login:'tilla', parol:'tilla9999', rol:'admin'},
   {login:'zavod', parol:'zavod9999', rol:'zavod'},
-  {login:'Abdulhamid_7777', parol:'Scoplon2003', rol:'admin2'}
+  {login:'Abdulhamid_7777', parol:'Scoplon2003', rol:'admin2'},
+  {login:'test', parol:'test7777', rol:'admin'} // TEST hisobi — sinov uchun
 ];
 function setAuth(rol){ localStorage.setItem('tilla-auth','1'); localStorage.setItem('tilla-rol',rol); document.cookie='tilla-auth=1;max-age=31536000;path=/'; }
 function getAuth(){ return localStorage.getItem('tilla-auth') || document.cookie.indexOf('tilla-auth=1')>=0; }
