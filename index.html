@@ -620,6 +620,22 @@ function renderTillaKassa(){
       h += '</div>';
     });
   }
+  // Kassa harakatlari (snapshot'dan, oxirgi 20 — yangi tepada)
+  if((s.harakatlar||[]).length){
+    h += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:6px 0 5px;">Kassa harakatlari · oxirgi</div>';
+    h += '<div style="max-height:220px;overflow-y:auto;">';
+    s.harakatlar.slice().reverse().forEach(function(r){
+      var ozg='';
+      if(r.dN) ozg += '<span style="color:'+(r.dN>0?'var(--green)':'var(--red,#c84545)')+';font-weight:500;">'+(r.dN>0?'+':'−')+'$'+fmtD(Math.abs(r.dN))+'</span>';
+      if(r.dL) ozg += (ozg?' ':'')+'<span style="color:#5ab4e8;font-size:10px;">'+(r.dL>0?'+':'−')+fmtG(Math.abs(r.dL))+'g</span>';
+      if(r.dT) ozg += (ozg?' ':'')+'<span style="color:#5ab4e8;font-size:10px;">'+(r.dT>0?'+':'−')+fmtG(Math.abs(r.dT))+'g·999</span>';
+      h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:5px 8px;background:var(--surf2);border-radius:7px;margin-bottom:4px;align-items:center;">';
+      h += '<span style="color:var(--text);">'+(r.soat?r.soat+' · ':'')+r.tavsif+' <span style="color:var(--muted);font-size:9px;">'+r.manba+'</span><div style="font-size:9px;color:var(--muted);">'+r.sana+'</div></span>';
+      h += '<span style="text-align:right;white-space:nowrap;">'+ozg+'</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
   h += '<div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px;">';
   h += '<span style="color:var(--muted);">Bugun: <span style="color:var(--green);">+$'+fmtD(s.bugunKirim)+'</span> / <span style="color:var(--red);">−$'+fmtD(s.bugunChiqim)+'</span></span>';
   h += '<span style="color:var(--muted);">'+(s.z ? 'Z: '+s.z.sana+' · $'+fmtD(s.z.naqd) : 'Z qilinmagan')+'</span>';
