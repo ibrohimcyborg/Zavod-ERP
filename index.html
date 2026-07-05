@@ -514,8 +514,13 @@ function tillaKassaInit(){
   try {
     _tApp = firebase.apps.find(function(a){return a.name==='tilla';}) || firebase.initializeApp(TILLA_CONFIG, 'tilla');
     _tDb = _tApp.firestore();
-    if (_rawLS.get('tilla-fb-signout')==='1') { _rawLS.rem('tilla-fb-signout'); _tApp.auth().signOut(); }
+    if (_rawLS.get('tilla-fb-signout')==='1') { _rawLS.rem('tilla-fb-signout'); localStorage.removeItem('tk-cloud-tasdiq'); _tApp.auth().signOut(); }
     _tApp.auth().onAuthStateChanged(function(u){
+      // QAT'IY: meros sessiya rejimga o'tolmaydi (TEST/haqiqiy ajratiladi)
+      if (u && localStorage.getItem('tk-cloud-tasdiq')!=='1') {
+        if (!TEST_MODE) { localStorage.setItem('tk-cloud-tasdiq','1'); }
+        else { _tApp.auth().signOut(); return; }
+      }
       _tUser = u;
       if (u) { tillaKassaListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
     });
@@ -525,7 +530,9 @@ function tillaKassaUlan(){
   var em = (document.getElementById('tk-email')||{}).value||'';
   var pa = (document.getElementById('tk-parol')||{}).value||'';
   if(!em.trim()||!pa){ alert('Tilla ERP email va parolini kiriting'); return; }
-  _tApp.auth().signInWithEmailAndPassword(em.trim(), pa).catch(function(e){
+  _tApp.auth().signInWithEmailAndPassword(em.trim(), pa).then(function(){
+    localStorage.setItem('tk-cloud-tasdiq','1'); // shu rejimda qo'lda ulanildi
+  }).catch(function(e){
     alert('Ulanish xatosi: '+(e.message||e.code));
   });
 }
