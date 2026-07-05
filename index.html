@@ -611,12 +611,13 @@ function renderTillaKassa(){
     h += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:4px 0 5px;">Mening amallarim · bugun</div>';
     mAmal.forEach(function(r){
       var ok = (s.importedIds||[]).indexOf(r.id) >= 0;
+      var bekor = (s.bekorIds||[]).indexOf(r.id) >= 0;
       var tx = r.tip==='berish'
         ? (r.zavodNom||'')+' berish · $'+fmtD(r.pul||0)+(parseFloat(r.lomG)>0?' + '+fmtG(r.lomG)+'g lom':'')+(parseFloat(r.tozaG)>0?' + '+fmtG(r.tozaG)+'g 999':'')
         : r.proba+' olish · '+fmtG(r.gramm)+'g @ '+r.narx;
       h += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 8px;background:var(--surf2);border-radius:7px;margin-bottom:4px;align-items:center;">';
       h += '<span>'+tx+'</span>';
-      h += '<span style="color:'+(ok?'var(--green)':'#e8b84c')+';white-space:nowrap;">'+(ok?'✓ qabul':'⧗ kutilmoqda')+' · '+(r.soat||'')+'</span>';
+      h += '<span style="color:'+(bekor?'var(--red,#c84545)':(ok?'var(--green)':'#e8b84c'))+';white-space:nowrap;">'+(bekor?'× bekor qilingan':(ok?'✓ qabul':'⧗ kutilmoqda'))+' · '+(r.soat||'')+'</span>';
       h += '</div>';
     });
   }
