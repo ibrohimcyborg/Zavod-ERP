@@ -413,6 +413,32 @@ input[type=number]{-moz-appearance:textfield;}
 </div>
 
 <script>
+// ═══════════ TEST REJIMI (sandbox) ═══════════
+// 'test' logini bilan kirilganda BARCHA localStorage kalitlar TEST- prefiks bilan
+// alohida yashaydi — haqiqiy bazaga bir bayt ham tegilmaydi. Cloud sessiyasi ham
+// rejim almashganda majburan uziladi (test@ hisobiga alohida kiriladi).
+var _rawLS = {
+  get: Storage.prototype.getItem.bind(localStorage),
+  set: Storage.prototype.setItem.bind(localStorage),
+  rem: Storage.prototype.removeItem.bind(localStorage)
+};
+var TEST_MODE = (function(){ try { return _rawLS.get('tilla-test-mode')==='1'; } catch(e){ return false; } })();
+if (TEST_MODE) {
+  (function(){
+    function tk(k){ return (typeof k==='string' && k!=='tilla-test-mode' && k!=='tilla-fb-signout') ? 'TEST-'+k : k; }
+    var _g=Storage.prototype.getItem, _s=Storage.prototype.setItem, _r=Storage.prototype.removeItem;
+    Storage.prototype.getItem = function(k){ return _g.call(this, tk(k)); };
+    Storage.prototype.setItem = function(k,v){ return _s.call(this, tk(k), v); };
+    Storage.prototype.removeItem = function(k){ return _r.call(this, tk(k)); };
+  })();
+  document.addEventListener('DOMContentLoaded', function(){
+    var b=document.createElement('div');
+    b.textContent='🧪 TEST REJIMI — alohida baza, haqiqiyga tegilmaydi';
+    b.style.cssText='position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:99999;background:#c84545;color:#fff;font-size:11px;font-weight:600;padding:3px 14px;border-radius:0 0 10px 10px;font-family:sans-serif;';
+    document.body.appendChild(b);
+  });
+}
+// ═══════════ /TEST REJIMI ═══════════
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 var CREDS = [
   {login:'tilla', parol:'tilla9999', rol:'admin'},
@@ -429,6 +455,20 @@ function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
   var found=CREDS.find(function(c){return c.login===u&&c.parol===p;});
+  if(found){
+    if(found.login==='test' && !TEST_MODE){
+      _rawLS.set('tilla-test-mode','1');
+      _rawLS.set('TEST-tilla-auth','1'); _rawLS.set('TEST-tilla-rol',found.rol);
+      _rawLS.set('tilla-fb-signout','1');
+      location.reload(); return;
+    }
+    if(found.login!=='test' && TEST_MODE){
+      _rawLS.set('tilla-test-mode','0');
+      _rawLS.set('tilla-auth','1'); _rawLS.set('tilla-rol',found.rol);
+      _rawLS.set('tilla-fb-signout','1');
+      location.reload(); return;
+    }
+  }
   if(found){
     setAuth(found.rol);
     document.getElementById('login-screen').style.display='none';
@@ -474,6 +514,7 @@ function tillaKassaInit(){
   try {
     _tApp = firebase.apps.find(function(a){return a.name==='tilla';}) || firebase.initializeApp(TILLA_CONFIG, 'tilla');
     _tDb = _tApp.firestore();
+    if (_rawLS.get('tilla-fb-signout')==='1') { _rawLS.rem('tilla-fb-signout'); _tApp.auth().signOut(); }
     _tApp.auth().onAuthStateChanged(function(u){
       _tUser = u;
       if (u) { tillaKassaListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
