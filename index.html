@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="screen-orientation" content="any">
+<!-- zv3: KRITIK TUZATISH — Tilla ERP bazasiga ulanuvchi 4 joy (kassa_snapshot, zavod_amallar o'qish/yozish) endi tillaKol() orqali TEST_MODE'ga qarab ALOHIDA (TEST_) kolleksiyaga ulanadi. Avval TEST rejimda ham har doim HAQIQIY Tilla kassasini o'qirdi/yozardi — endi ikkalasi to'liq izolyatsiyalangan. -->
 <title>Zavod Hisob</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
@@ -457,6 +458,9 @@ function getFbDoc(){
   // TEST rejimida o'z cloudda ham alohida hujjat — haqiqiy 'main' ga tegilmaydi
   return TEST_MODE ? 'TEST_'+d : d;
 }
+// Tilla ERP bazasiga ulanish — TEST rejimda albatta ALOHIDA (TEST_) kolleksiya,
+// haqiqiy Tilla ma'lumotiga hech qachon tegmasin (Tilla ERP'dagi cloudKol() bilan bir xil qoida)
+function tillaKol(){ return (TEST_MODE?'TEST_':'') + 'tilla_'+_tUser.uid; }
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
@@ -544,7 +548,7 @@ function tillaKassaUlan(){
 }
 function tillaKassaListen(){
   if(_tUnsub) _tUnsub();
-  _tUnsub = _tDb.collection('tilla_'+_tUser.uid).doc('kassa_snapshot')
+  _tUnsub = _tDb.collection(tillaKol()).doc('kassa_snapshot')
     .onSnapshot(function(doc){
       _tSnap = doc.exists ? doc.data() : null;
       renderTillaKassa();
@@ -651,7 +655,7 @@ var _zaUnsub2 = null;
 function zaListen(){
   if(!_tUser || !_tDb) return;
   if(_zaUnsub2) _zaUnsub2();
-  _zaUnsub2 = _tDb.collection('tilla_'+_tUser.uid).doc('zavod_amallar').onSnapshot(function(doc){
+  _zaUnsub2 = _tDb.collection(tillaKol()).doc('zavod_amallar').onSnapshot(function(doc){
     _zaCache = doc.exists ? ((doc.data()||{}).amallar||[]) : [];
     renderTillaKassa();
   }, function(e){ console.error('zaListen:', e); });
@@ -750,7 +754,7 @@ function nowSoatZ(){ var n=new Date(); return String(n.getHours()).padStart(2,'0
 function zaYoz(rec, cb){
   rec.id = 'za'+Date.now()+Math.floor(Math.random()*999);
   rec.ts = Date.now(); rec.sana = today(); rec.soat = nowSoatZ();
-  _tDb.collection('tilla_'+_tUser.uid).doc('zavod_amallar').set(
+  _tDb.collection(tillaKol()).doc('zavod_amallar').set(
     { amallar: firebase.firestore.FieldValue.arrayUnion(rec) }, { merge: true }
   ).then(function(){ if(cb) cb(); }).catch(function(e){ alert('Yozishda xato: '+(e.message||e)); });
 }
@@ -971,7 +975,7 @@ function zaprosTaqsimSaqla(){
   });
   // taqsim holatini zavod_amallar hujjatiga qaytarib yozamiz (bu hujjatning egasi — zavod ERP)
   if(_tDb && _tUser){
-    _tDb.collection('tilla_'+_tUser.uid).doc('zavod_amallar').set({amallar:_zaCache})
+    _tDb.collection(tillaKol()).doc('zavod_amallar').set({amallar:_zaCache})
       .catch(function(e){ console.error('zapros taqsim yozish:', e); });
   }
   save();
