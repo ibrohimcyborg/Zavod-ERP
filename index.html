@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="screen-orientation" content="any">
-<!-- zv3: KRITIK TUZATISH — Tilla ERP bazasiga ulanuvchi 4 joy (kassa_snapshot, zavod_amallar o'qish/yozish) endi tillaKol() orqali TEST_MODE'ga qarab ALOHIDA (TEST_) kolleksiyaga ulanadi. Avval TEST rejimda ham har doim HAQIQIY Tilla kassasini o'qirdi/yozardi — endi ikkalasi to'liq izolyatsiyalangan. -->
+<!-- zv4: KRITIK TUZATISH — 2 joyda (umumiy hisobot va zavod hisoboti) sana saralash 'DD.MM.YYYY' satrini localeCompare bilan solishtirar edi, bu kun raqamini oy raqamidan oldin solishtirib, masalan '05.06.2026' ni '04.07.2026' dan xato ravishda kattaroq ko'rsatardi. Endi fdSanaTs() (haqiqiy timestamp) bilan solishtiriladi. -->
 <title>Zavod Hisob</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
@@ -453,6 +453,14 @@ function setAuth(rol){ localStorage.setItem('tilla-auth','1'); localStorage.setI
 function getAuth(){ return localStorage.getItem('tilla-auth') || document.cookie.indexOf('tilla-auth=1')>=0; }
 function getRol(){ return localStorage.getItem('tilla-rol')||'admin'; }
 function getDataKey(){ return getRol()==='admin2' ? 'tilla-v2-abdulhamid' : 'tilla-v2'; }
+// 'DD.MM.YYYY' sanasini haqiqiy timestampga aylantiradi — sana solishtirishda
+// satr (localeCompare) ishlatilsa, kun raqami oy raqamidan oldin solishtirilib,
+// masalan '05.06.2026' xato ravishda '04.07.2026' dan katta chiqib qolardi.
+function fdSanaTs(sana, soat){
+  if(!sana) return 0;
+  var p=sana.split('.'); if(p.length!==3) return 0;
+  return new Date(p[2]+'-'+p[1]+'-'+p[0]+'T'+(soat||'00:00')).getTime();
+}
 function getFbDoc(){
   var d = getRol()==='admin2' ? 'abdulhamid' : 'main';
   // TEST rejimida o'z cloudda ham alohida hujjat — haqiqiy 'main' ga tegilmaydi
@@ -1166,7 +1174,7 @@ function renderHisobot(){
     if(!groups[key]){ groups[key]={tip:op.tip,zavod:item.zavod,sana:op.sana,turlar:[]}; groupOrder.push(key); }
     groups[key].turlar.push(item);
   });
-  groupOrder.sort(function(a,b){ return groups[b].sana.localeCompare(groups[a].sana); });
+  groupOrder.sort(function(a,b){ return fdSanaTs(groups[b].sana) - fdSanaTs(groups[a].sana); });
   var expanded={};
   function render(){
     var out='';
@@ -1308,7 +1316,7 @@ function renderZavodHisobot(){
     if(!groups[key]){ groups[key]={tip:op.tip,sana:op.sana,turlar:[]}; groupOrder.push(key); }
     groups[key].turlar.push(item);
   });
-  groupOrder.sort(function(a,b){ return groups[b].sana.localeCompare(groups[a].sana); });
+  groupOrder.sort(function(a,b){ return fdSanaTs(groups[b].sana) - fdSanaTs(groups[a].sana); });
   var zExp={};
   function renderZH(){
     var out='';
