@@ -554,6 +554,23 @@ function tillaKassaUlan(){
     alert('Ulanish xatosi: '+(e.message||e.code));
   });
 }
+// Qaysi akkaunt bilan ulanganini ko'rsatadi + cloudni uzadi. Avval chiqish faqat butun
+// ilovadan chiqqanda bo'lardi (doLogout -> tilla-fb-signout, 480 va 535) — noto'g'ri
+// akkaunt bilan ulansa uni almashtirish uchun Zavod ERP dan butunlay chiqish kerak edi.
+function tkAkkauntQatori(){
+  if(!_tUser) return '';
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surf2);border-radius:8px;padding:6px 9px;margin-bottom:8px;">'
+    +'<span style="font-size:11.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">☁ <b>'+(_tUser.email||'—')+'</b></span>'
+    +'<button onclick="tillaKassaChiq()" style="background:transparent;border:1px solid var(--red,#c84545);color:var(--red,#c84545);border-radius:7px;padding:3px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;">Chiqish</button>'
+    +'</div>';
+}
+function tillaKassaChiq(){
+  if(!_tApp) return;
+  // 535 dagi naqsh: bayroq ham tozalanadi, aks holda keyingi ulanishda meros sessiya
+  // tekshiruvi o'tib ketadi.
+  localStorage.removeItem('tk-cloud-tasdiq');
+  _tApp.auth().signOut();   // onAuthStateChanged (536) o'zi listenerlarni to'xtatib formani qaytaradi
+}
 function tillaKassaListen(){
   if(_tUnsub) _tUnsub();
   _tUnsub = _tDb.collection(tillaKol()).doc('kassa_snapshot')
@@ -587,7 +604,9 @@ function renderTillaKassa(){
   }
   // Ulangan lekin snapshot hali yo'q
   if(!_tSnap){
-    el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--muted);">TILLA KASSA — kutilmoqda... (Tilla ERP hali snapshot yubormagan; Tilla ERPni ochib bitta amal saqlang)</div>';
+    el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">TILLA KASSA — kutilmoqda... (Tilla ERP hali snapshot yubormagan; Tilla ERPni ochib bitta amal saqlang)</div>'
+      +tkAkkauntQatori()+'</div>';
     return;
   }
   var s = _tSnap;
@@ -600,6 +619,7 @@ function renderTillaKassa(){
   var _dotRang = _yosh<120 ? 'var(--green)' : (_yosh<1800 ? '#e8b84c' : 'var(--red)');
   h += '<span style="font-size:10px;color:var(--muted);"><span style="color:'+_dotRang+';">●</span> '+fmtVaqt(s.vaqt)+' · <span id="tk-nisbiy">'+fmtNisbiy(s.vaqt)+'</span></span>';
   h += '</div>';
+  h += tkAkkauntQatori();
   // zakaz bannerlari
   (s.zakazlar||[]).forEach(function(z){
     var qoldi = z.muddatTs - Date.now();
