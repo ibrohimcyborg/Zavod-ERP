@@ -527,7 +527,7 @@ var TILLA_CONFIG = {
   messagingSenderId: "876933095476",
   appId: "1:876933095476:web:a9fbf2c66fb496be0baa61"
 };
-var _tApp = null, _tDb = null, _tUser = null, _tUnsub = null, _tSnap = null;
+var _tApp = null, _tDb = null, _tUser = null, _tSnap = null;
 function tillaKassaInit(){
   try {
     _tApp = firebase.apps.find(function(a){return a.name==='tilla';}) || firebase.initializeApp(TILLA_CONFIG, 'tilla');
@@ -540,7 +540,7 @@ function tillaKassaInit(){
         else { _tApp.auth().signOut(); return; }
       }
       _tUser = u;
-      if (u) { tillaKassaListen(); tillaHolatListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_tHolatUnsub){_tHolatUnsub();_tHolatUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _tCalc=null; _zaCache=[]; renderTillaKassa(); }
+      if (u) { tillaHolatListen(); zaListen(); } else { if(_tHolatUnsub){_tHolatUnsub();_tHolatUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
     });
   } catch(e){ console.error('tillaKassaInit:', e); }
 }
@@ -675,18 +675,109 @@ function tkKassaOqim(D, limitSana){
   o.bugunKirim=Math.round(o.bugunKirim*100)/100; o.bugunChiqim=Math.round(o.bugunChiqim*100)/100;
   return o;
 }
+// tkKassaMuzlatilgan <- kassaMuzlatilgan (Tilla 4777) — ochiq zakazlarda band pul
+function tkKassaMuzlatilgan(D){
+  var s=0;
+  ((D&&D.kassa&&D.kassa.zakazlar)||[]).forEach(function(z){ if(z.holat==='ochiq') s+=parseNum(z.summa); });
+  return Math.round(s*100)/100;
+}
+// tkKassaHarakatlar <- kassaHarakatlar (Tilla 4118) — kassa lentasi
+function tkKassaHarakatlar(D){
+  var L=[];
+  function qo(sana,soat,ts,tavsif,manba,dN,dL,dT,extra){
+    L.push({sana:sana||'',soat:soat||'',ts:ts||0,tavsif:tavsif,manba:manba,dN:Math.round((dN||0)*100)/100,dL:roundG(dL||0),dT:roundG(dT||0),extra:extra||''});
+  }
+  (D.klientlar||[]).forEach(function(k){ (k.tarix||[]).forEach(function(op){
+    if(op.tip!=='tolov'||op._kdYopish) return;
+    var pul=tkOpNaqtPul(op);
+    if(pul>0.001) qo(op.sana,op.soat,op.ts,(k.nom||'Klient')+' · sotuv/to\'lov','avto',pul,0,0,'← klientdan naqd');
+  });});
+  (D.lomlar||[]).forEach(function(r){
+    var p=parseNum(r.proba), g=parseNum(r.gramm), s=parseNum(r.summa||0);
+    var is9=(p===999), ekv=is9?0:tkKassaEkv(p,g);
+    if(r.tip==='kirim'){
+      if(r.manba==='kocha') qo(r.sana,r.soat,r.sana_ts,'Lom olish (ko\'cha) · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',-s,ekv,is9?g:0,'→ pul chiqdi, lom keldi');
+      else qo(r.sana,r.soat,r.sana_ts,(r.klientNom||'Klient')+' · lomda to\'lov · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',0,ekv,is9?g:0,'← klientdan lom (naqdga 0)');
+    } else {
+      if(r.manba==='zavod') qo(r.sana,r.soat,r.sana_ts,'Zavodga lom topshirildi · '+p+' · '+fmtG(g)+'g','lom',0,-ekv,is9?-g:0,'→ zavodga gramm');
+      else if(r.manba==='chiqim') qo(r.sana,r.soat,r.sana_ts,'Qo\'lda chiqim (lom) · '+p+' · '+fmtG(g)+'g'+(r.izoh?' · '+r.izoh:''),'qolda',0,-ekv,is9?-g:0,'→ lom chiqdi');
+      else qo(r.sana,r.soat,r.sana_ts,'Lom sotildi · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',s,-ekv,is9?-g:0,'→ pul keldi');
+    }
+  });
+  (D.zavodlar||[]).forEach(function(z){ (z.turlar||[]).forEach(function(tr){ (tr.tarix||[]).forEach(function(op){
+    if(op.tip!=='tolov') return;
+    var s=parseNum(op.naqtSumma||0);
+    if(s>0) qo(op.sana,op.soat,op.ts,(z.nom||'Zavod')+' · to\'lov (chiqim)','chiqim',-s,0,0,'→ zavodga pul'+(op.naqtKurs?' @ '+op.naqtKurs:''));
+  });});});
+  ((D.kassa&&D.kassa.snabAmallar)||[]).forEach(function(r){
+    if(r.holat==='bekor') return;
+    if(r.tip==='berish'){
+      var q=[]; if(parseNum(r.pul)>0)q.push('pul −$'+fmtD(r.pul)); if(parseNum(r.lomG)>0)q.push('lom −'+fmtG(r.lomG)+'g'); if(parseNum(r.tozaG)>0)q.push('999 −'+fmtG(r.tozaG)+'g');
+      qo(r.sana,r.soat,r.ts,(r.zavodNom||'Zavod')+' · berish — '+q.join(' · '),'snab',-parseNum(r.pul||0),-parseNum(r.lomG||0),-parseNum(r.tozaG||0),'→ zavodga · kurs '+r.kurs583+'/'+r.kurs999);
+    } else {
+      var is9=parseNum(r.proba)===999, g=parseNum(r.gramm||0);
+      qo(r.sana,r.soat,r.ts,r.proba+' sotib olish · '+fmtG(g)+'g @ '+r.narx,'snab',-parseNum(r.summa||0),is9?0:tkKassaEkv(r.proba,g),is9?g:0,'→ pul chiqdi, '+(is9?'999':'lom')+' keldi');
+    }
+  });
+  ((D.kassa&&D.kassa.qolda)||[]).forEach(function(r){
+    var s=parseNum(r.summa||0);
+    qo(r.sana,r.soat,r.ts,(r.kategoriya||'Qo\'lda')+(r.izoh?' · '+r.izoh:''),'qolda',r.tip==='kirim'?s:-s,0,0,r.tip==='kirim'?'← qo\'lda kirim':'→ qo\'lda chiqim');
+  });
+  ((D.kassa&&D.kassa.tuzatishlar)||[]).forEach(function(tz){
+    var d=parseNum(tz.delta||0);
+    qo(tz.sana,tz.soat,tz.ts,'Z tafovut · '+tz.chontak+(d>0?' +':' ')+(tz.chontak==='naqd'?('$'+fmtD(d)):fmtG(d)+'g'),'Z',tz.chontak==='naqd'?d:0,tz.chontak==='lom'?d:0,tz.chontak==='999'?d:0,'tafovut tuzatish');
+  });
+  L.sort(function(a,b){
+    var ka=tkSanaKey(a.sana)+' '+(a.soat||'00:00'), kb=tkSanaKey(b.sana)+' '+(b.soat||'00:00');
+    if(ka!==kb) return ka<kb?-1:1;
+    return (a.ts||0)-(b.ts||0);
+  });
+  return L;
+}
+// Tilla ERP ning kassaSnapshotObj (18595) qaytaradigan obyektining aynan o'zi —
+// endi uni Tilla yubormaydi, o'zimiz quramiz.
+function tkSnapshotQur(D, m){
+  var o = tkKassaOqim(D);
+  if(!o) return null;
+  var band = tkKassaMuzlatilgan(D);
+  var zx = ((D.kassa&&D.kassa.zlar)||[]);
+  zx = zx.length ? zx[zx.length-1] : null;
+  return {
+    vaqt: m.vaqt||0, qurilma: m.qurilma||'', sana: today(), soat: '',
+    // kurs583 Tilla ERP ning localStorage idan olinardi (tilla-kurs-bugun) — u
+    // cloud JSON ida YO'Q. Shuning uchun 0: Berish oynasida kurs maydoni oldindan
+    // to'lmaydi, qo'lda yoziladi. Boshqa hech narsaga ta'sir qilmaydi.
+    kurs583: 0,
+    // Zavod ERP bundan faqat NOM ni oladi (920, 921) — ostatka ishlatilmaydi,
+    // shuning uchun Tilla ning og'ir turOst hisobi ko'chirilmadi.
+    zavodlar: (D.zavodlar||[]).map(function(z){ return {nom:z.nom}; }),
+    naqd:o.naqd, lomEkv:o.lomEkv, toza:o.toza,
+    erkin: Math.round((o.naqd-band)*100)/100, band: band,
+    bugunKirim:o.bugunKirim, bugunChiqim:o.bugunChiqim,
+    importedIds: ((D.kassa&&D.kassa.zaImportIds)||[]).slice(-100),
+    bekorIds: (((D.kassa&&D.kassa.snabAmallar)||[]).filter(function(r){return r.holat==='bekor';}).map(function(r){return r.id;})).slice(-100),
+    zakazlar: ((D.kassa&&D.kassa.zakazlar)||[]).filter(function(z){return z.holat==='ochiq';})
+      .map(function(z){ return {id:z.id, zavodNom:z.zavodNom, summa:z.summa, kurs:z.kurs, muddatTs:z.muddatTs, izoh:z.izoh||''}; }),
+    harakatlar: tkKassaHarakatlar(D).filter(function(r){
+      if(r.manba==='snab' || r.manba==='chiqim' || r.manba==='qolda') return true;
+      if(r.manba==='lom' && (r.dL<0 || r.dT<0)) return true;
+      return false;
+    }).slice(-20).map(function(r){ return {sana:r.sana, soat:r.soat, tavsif:r.tavsif, manba:r.manba, dN:r.dN, dL:r.dL, dT:r.dT}; }),
+    z: zx ? {sana:zx.sana, soat:zx.soat||'', naqd:zx.naqd} : null
+  };
+}
 // holat hujjatini kuzatadi -> bo'laklarni o'qiydi -> kassani hisoblaydi
-var _tCalc = null, _tHolatUnsub = null, _tCalcBand = false;
+var _tHolatUnsub = null, _tCalcBand = false;
 function tillaHolatListen(){
   if(_tHolatUnsub) _tHolatUnsub();
   _tHolatUnsub = _tDb.collection(tillaKol()).doc('holat').onSnapshot(function(doc){
-    if(!doc.exists){ _tCalc=null; renderTillaKassa(); return; }
+    if(!doc.exists){ _tSnap=null; renderTillaKassa(); return; }
     tillaHolatOqi(doc.data()||{});
   }, function(err){ console.error('tilla holat listen:', err); });
 }
 function tillaHolatOqi(m){
   var n = parseInt(m.bolak||0);
-  if(!(n>0)){ _tCalc=null; renderTillaKassa(); return; }
+  if(!(n>0)){ _tSnap=null; renderTillaKassa(); return; }
   if(_tCalcBand) return;           // oldingi o'qish tugamagan — takror so'ramaymiz
   _tCalcBand = true;
   var reads=[];
@@ -696,19 +787,10 @@ function tillaHolatOqi(m){
     docs.forEach(function(d){ json += (d.exists && d.data() && d.data().j) ? d.data().j : ''; });
     var D=null;
     try { D = JSON.parse(json); } catch(e){ console.error('tilla holat parse:', e); }
-    var oqim = D ? tkKassaOqim(D) : null;
-    _tCalc = oqim ? {vaqt:(m.vaqt||0), qurilma:(m.qurilma||''), oqim:oqim} : null;
+    _tSnap = D ? tkSnapshotQur(D, m) : null;
     _tCalcBand = false;
     renderTillaKassa();
   }).catch(function(e){ console.error('tilla holat oqish:', e); _tCalcBand=false; });
-}
-function tillaKassaListen(){
-  if(_tUnsub) _tUnsub();
-  _tUnsub = _tDb.collection(tillaKol()).doc('kassa_snapshot')
-    .onSnapshot(function(doc){
-      _tSnap = doc.exists ? doc.data() : null;
-      renderTillaKassa();
-    }, function(err){ console.error('kassa snapshot listen:', err); _tSnap=null; renderTillaKassa(); });
 }
 function fmtVaqt(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
 function fmtNisbiy(ts){
@@ -733,16 +815,11 @@ function renderTillaKassa(){
       +'</div>';
     return;
   }
-  // Snapshot bo'lsa — o'sha (to'liq: zakaz, harakatlar, band/erkin).
-  // Bo'lmasa — holat bo'laklaridan o'zimiz hisoblagani (faqat raqamlar).
-  var s = _tSnap, _tManba = 'snapshot';
-  if(!s && _tCalc){
-    var _q = _tCalc.oqim;
-    s = { vaqt:_tCalc.vaqt, naqd:_q.naqd, lomEkv:_q.lomEkv, toza:_q.toza,
-          erkin:_q.naqd, band:0, bugunKirim:_q.bugunKirim, bugunChiqim:_q.bugunChiqim,
-          zakazlar:[], harakatlar:[], importedIds:[], bekorIds:[], z:null };
-    _tManba = 'hisob';
-  }
+  // Snapshot hujjati BUTUNLAY tashlandi (Ibrohim: «hech qanaqa snapshotlarsiz,
+  // online ishlasin»). _tSnap endi holat bo'laklaridan O'ZIMIZ hisoblab
+  // quriladi (tkSnapshotQur) — shakli bir xil, shuning uchun uni o'qiydigan
+  // hamma joy (Berish/Olish oynalari, taymer) o'zgarishsiz ishlayveradi.
+  var s = _tSnap;
   // Ulangan, lekin cloudda hali hech narsa yo'q
   if(!s){
     el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
@@ -754,7 +831,7 @@ function renderTillaKassa(){
   var naqdSub = (s.band>0) ? '<div style="font-size:10px;margin-top:2px;"><span style="color:var(--green);">erkin $'+fmtD(s.erkin)+'</span> · <span style="color:#5ab4e8;">band $'+fmtD(s.band)+'</span></div>' : '';
   var h = '<div style="background:var(--surf);border:1px solid var(--gold);border-top:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:10px;">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
-  h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — '+(_tManba==='hisob'?'hisoblangan':'jonli')+'</span>';
+  h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — jonli'+'</span>';
   var _yosh = Math.floor((Date.now()-s.vaqt)/1000);
   var _dotRang = _yosh<120 ? 'var(--green)' : (_yosh<1800 ? '#e8b84c' : 'var(--red)');
   h += '<span style="font-size:10px;color:var(--muted);"><span style="color:'+_dotRang+';">●</span> '+fmtVaqt(s.vaqt)+' · <span id="tk-nisbiy">'+fmtNisbiy(s.vaqt)+'</span></span>';
