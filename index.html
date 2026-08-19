@@ -1,4 +1,4 @@
-<!-- v1.00 -->
+<!-- v1.01 -->
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -445,7 +445,7 @@ if (TEST_MODE) {
 // ═══════════ /TEST REJIMI ═══════════
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 // Versiya. Fayl BIRINCHI qatoridagi <!-- vX.XX --> bilan bir xil bo'lishi SHART.
-var ZAVOD_VER = 'v1.00';
+var ZAVOD_VER = 'v1.01';
 document.addEventListener('DOMContentLoaded', function(){
   var e=document.getElementById('zver'); if(e) e.textContent=ZAVOD_VER;
 });
@@ -474,7 +474,29 @@ function getFbDoc(){
 }
 // Tilla ERP bazasiga ulanish — TEST rejimda albatta ALOHIDA (TEST_) kolleksiya,
 // haqiqiy Tilla ma'lumotiga hech qachon tegmasin (Tilla ERP'dagi cloudKol() bilan bir xil qoida)
-function tillaKol(){ return (TEST_MODE?'TEST_':'') + 'tilla_'+_tUser.uid; }
+// Tilla ERP kolleksiyasi uch xil bo'lishi mumkin (Tilla cloudKol() 18286):
+//   tilla_<uid>         oddiy rejim
+//   ADMIN_tilla_<uid>   ADMIN xonasi
+//   TEST_tilla_<uid>    TEST xonasi
+// Qaysi biri ekanini FOYDALANUVCHI bilishi shart emas — uchalasini ham sinab
+// ko'ramiz va ma'lumot turgan (holat hujjati bor) eng YANGISINI olamiz.
+var _tKol = null;
+function tillaKol(){ return _tKol || ((TEST_MODE?'TEST_':'') + 'tilla_'+(_tUser?_tUser.uid:'x')); }
+function tillaKolTop(cb){
+  if(!_tUser || !_tDb){ cb(); return; }
+  var uid = _tUser.uid;
+  var nomzod = ['tilla_'+uid, 'ADMIN_tilla_'+uid, 'TEST_tilla_'+uid];
+  Promise.all(nomzod.map(function(n){
+    return _tDb.collection(n).doc('holat').get()
+      .then(function(d){ return d.exists ? {nom:n, vaqt:((d.data()||{}).vaqt)||0} : null; })
+      .catch(function(){ return null; });
+  })).then(function(r){
+    var bor = r.filter(Boolean).sort(function(a,b){ return b.vaqt - a.vaqt; });
+    _tKol = bor.length ? bor[0].nom : null;
+    console.log('Tilla kolleksiya:', _tKol || 'topilmadi', '| sinaldi:', nomzod.join(', '));
+    cb();
+  }).catch(function(e){ console.error('tillaKolTop:', e); cb(); });
+}
 function doLogin(){
   var u=document.getElementById('login-user').value.trim();
   var p=document.getElementById('login-pass').value;
@@ -546,7 +568,7 @@ function tillaKassaInit(){
         else { _tApp.auth().signOut(); return; }
       }
       _tUser = u;
-      if (u) { tillaHolatListen(); zaListen(); } else { if(_tHolatUnsub){_tHolatUnsub();_tHolatUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
+      if (u) { tillaKolTop(function(){ tillaHolatListen(); zaListen(); }); } else { if(_tHolatUnsub){_tHolatUnsub();_tHolatUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tKol=null; _tSnap=null; _zaCache=[]; renderTillaKassa(); }
     });
   } catch(e){ console.error('tillaKassaInit:', e); }
 }
