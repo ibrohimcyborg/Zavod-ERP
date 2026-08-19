@@ -540,7 +540,7 @@ function tillaKassaInit(){
         else { _tApp.auth().signOut(); return; }
       }
       _tUser = u;
-      if (u) { tillaKassaListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _zaCache=[]; renderTillaKassa(); }
+      if (u) { tillaKassaListen(); tillaHolatListen(); zaListen(); } else { if(_tUnsub){_tUnsub();_tUnsub=null;} if(_tHolatUnsub){_tHolatUnsub();_tHolatUnsub=null;} if(_zaUnsub2){_zaUnsub2();_zaUnsub2=null;} _tSnap=null; _tCalc=null; _zaCache=[]; renderTillaKassa(); }
     });
   } catch(e){ console.error('tillaKassaInit:', e); }
 }
@@ -570,6 +570,137 @@ function tillaKassaChiq(){
   // tekshiruvi o'tib ketadi.
   localStorage.removeItem('tk-cloud-tasdiq');
   _tApp.auth().signOut();   // onAuthStateChanged (536) o'zi listenerlarni to'xtatib formani qaytaradi
+}
+// ══════════════════════════════════════════════════════════════════════════
+// TILLA KASSANI CLOUDDAN O'ZI HISOBLASH — snapshot bo'lmasa ham ko'rsatadi
+// Ibrohim: «snapshot so'ravotti — snapshotsiz ishlaydigan qil, lekin zavod erp
+// buzilmasin, shunchaki ko'rsatsin».
+//
+// Tilla ERP butun bazasini cloudga yozadi: holat (meta: vaqt/qurilma/bolak) +
+// holat_b0..bN (tilla-v2 JSON bo'laklari). kassa_snapshot faqat Tilla ERP
+// saqlaganda yoziladi — bo'lmasa shu bo'laklardan o'zimiz hisoblaymiz.
+//
+// ⚠ QUYIDAGI TO'RT FUNKSIYA — Tilla ERP index.html dan AYNAN NUSXA:
+//      tkKassaEkv   <- kassaEkv    (Tilla 3286)
+//      tkSanaKey    <- sanaKey     (Tilla 3289)
+//      tkOpNaqtPul  <- _opNaqtPul  (Tilla 3305)
+//      tkKassaOqim  <- kassaOqim   (Tilla 3316)
+//    Tilla ERP da kassa hisobi o'zgarsa — BU YERDA HAM o'zgartirilsin.
+//    Aks holda ikki ilova boshqa-boshqa raqam ko'rsatadi va buni hech narsa
+//    ogohlantirmaydi.
+//
+// YAGONA FARQ: Tilla ERP da global `data` o'qiladi. Bu yerda `data` — ZAVOD
+// ERP niki, unga TEGILMAYDI. Tilla ma'lumoti parametr (D) bilan uzatiladi.
+// ══════════════════════════════════════════════════════════════════════════
+function tkKassaEkv(proba, gramm){ return Math.round(parseNum(proba)*parseNum(gramm)/583*100)/100; }
+function tkSanaKey(s){
+  if(!s) return '';
+  var p = String(s).split('.');
+  return p.length===3 ? p[2]+p[1]+p[0] : '';
+}
+function tkOpNaqtPul(op){
+  if(!op) return 0;
+  if(op.naqtPul===undefined) return (op.kartaPul||op.perechPul) ? 0 : parseNum(op.summa||0);
+  var n = parseNum(op.naqtPul)||0;
+  if(n > 0.005) return n;
+  var lom = parseNum(op.lomPul||0);
+  if(!(lom > 0.005)) return n;
+  var q = Math.round((parseNum(op.summa||0) - lom
+        - parseNum(op.kartaPul||0) - parseNum(op.perechPul||0))*100)/100;
+  return q > 0.005 ? q : n;
+}
+function tkKassaOqim(D, limitSana){
+  if(!D) return null;
+  var t = limitSana || today();
+  var lim = limitSana ? tkSanaKey(limitSana) : null;
+  function ichida(sana){ return !lim || (tkSanaKey(sana) && tkSanaKey(sana) <= lim); }
+  var o = {naqd:0, karta:0, perech:0, lomEkv:0, toza:0, bugunKirim:0, bugunChiqim:0};
+  // 1) Klient to'lovlari — tushum (offset _kdYopish emas)
+  (D.klientlar||[]).forEach(function(k){ (k.tarix||[]).forEach(function(op){
+    if(op.tip!=='tolov' || op._kdYopish || !ichida(op.sana)) return;
+    var _kp = parseNum(op.kartaPul||0);
+    var pul = tkOpNaqtPul(op);
+    if(pul){ o.naqd += pul; if(op.sana===t) o.bugunKirim += pul; }
+    if(_kp){ o.karta += _kp; if(op.sana===t) o.bugunKirim += _kp; }
+    var _pp = parseNum(op.perechPul||0);
+    if(_pp){ o.perech += _pp; }
+  });});
+  // 2) Zavod chiqimlari — naqd pul berilgani srazu ayriladi
+  (D.zavodlar||[]).forEach(function(z){ (z.turlar||[]).forEach(function(tr){ (tr.tarix||[]).forEach(function(op){
+    if(op.tip!=='tolov' || !ichida(op.sana)) return;
+    var s = parseNum(op.naqtSumma||0);
+    if(s>0){ o.naqd -= s; if(op.sana===t) o.bugunChiqim += s; }
+  });});});
+  // 3) Lom moduli — cho'ntaklar (583 ekv / 999 alohida) va naqd ta'siri
+  (D.lomlar||[]).forEach(function(r){
+    if(!ichida(r.sana)) return;
+    var sgn = (r.tip==='chiqim') ? -1 : 1;
+    var p = parseNum(r.proba), g = parseNum(r.gramm);
+    if(p===999){ o.toza += sgn*g; } else if(p>0&&g>0){ o.lomEkv += sgn*tkKassaEkv(p,g); }
+    var s = parseNum(r.summa||0);
+    if(r.tip==='kirim' && r.manba==='kocha' && s>0){ o.naqd -= s; if(r.sana===t) o.bugunChiqim += s; }
+    if(r.tip==='chiqim' && r.manba!=='zavod' && s>0){ o.naqd += s; if(r.sana===t) o.bugunKirim += s; }
+  });
+  // 3.5) Snabjenets amallari (zavod ERPdan import qilingan)
+  ((D.kassa&&D.kassa.snabAmallar)||[]).forEach(function(r){
+    if(!ichida(r.sana) || r.holat==='bekor') return;
+    if(r.tip==='berish'){
+      var p=parseNum(r.pul||0);
+      if(p>0){ o.naqd -= p; if(r.sana===t) o.bugunChiqim += p; }
+      if(parseNum(r.lomG)>0) o.lomEkv -= parseNum(r.lomG);
+      if(parseNum(r.tozaG)>0) o.toza -= parseNum(r.tozaG);
+    } else if(r.tip==='olish'){
+      var s2=parseNum(r.summa||0);
+      if(s2>0){ o.naqd -= s2; if(r.sana===t) o.bugunChiqim += s2; }
+      var pg=parseNum(r.gramm||0);
+      if(pg>0){ if(parseNum(r.proba)===999) o.toza += pg; else o.lomEkv += tkKassaEkv(r.proba, pg); }
+    }
+  });
+  // 3.7) Qo'lda kirim/chiqim (kategoriyali)
+  ((D.kassa&&D.kassa.qolda)||[]).forEach(function(r){
+    if(!ichida(r.sana)) return;
+    var s3=parseNum(r.summa||0); if(s3<=0) return;
+    if(r.tip==='kirim'){ o.naqd += s3; if(r.sana===t) o.bugunKirim += s3; }
+    else { o.naqd -= s3; if(r.sana===t) o.bugunChiqim += s3; }
+  });
+  // 4) Z tafovut tuzatishlari (append-only)
+  ((D.kassa&&D.kassa.tuzatishlar)||[]).forEach(function(tz){
+    if(!ichida(tz.sana)) return;
+    if(tz.chontak==='naqd') o.naqd += parseNum(tz.delta);
+    else if(tz.chontak==='lom') o.lomEkv += parseNum(tz.delta);
+    else if(tz.chontak==='999') o.toza += parseNum(tz.delta);
+  });
+  o.naqd=Math.round(o.naqd*100)/100; o.karta=Math.round(o.karta*100)/100;
+  o.perech=Math.round(o.perech*100)/100; o.lomEkv=roundG(o.lomEkv); o.toza=roundG(o.toza);
+  o.bugunKirim=Math.round(o.bugunKirim*100)/100; o.bugunChiqim=Math.round(o.bugunChiqim*100)/100;
+  return o;
+}
+// holat hujjatini kuzatadi -> bo'laklarni o'qiydi -> kassani hisoblaydi
+var _tCalc = null, _tHolatUnsub = null, _tCalcBand = false;
+function tillaHolatListen(){
+  if(_tHolatUnsub) _tHolatUnsub();
+  _tHolatUnsub = _tDb.collection(tillaKol()).doc('holat').onSnapshot(function(doc){
+    if(!doc.exists){ _tCalc=null; renderTillaKassa(); return; }
+    tillaHolatOqi(doc.data()||{});
+  }, function(err){ console.error('tilla holat listen:', err); });
+}
+function tillaHolatOqi(m){
+  var n = parseInt(m.bolak||0);
+  if(!(n>0)){ _tCalc=null; renderTillaKassa(); return; }
+  if(_tCalcBand) return;           // oldingi o'qish tugamagan — takror so'ramaymiz
+  _tCalcBand = true;
+  var reads=[];
+  for(var i=0;i<n;i++) reads.push(_tDb.collection(tillaKol()).doc('holat_b'+i).get());
+  Promise.all(reads).then(function(docs){
+    var json='';
+    docs.forEach(function(d){ json += (d.exists && d.data() && d.data().j) ? d.data().j : ''; });
+    var D=null;
+    try { D = JSON.parse(json); } catch(e){ console.error('tilla holat parse:', e); }
+    var oqim = D ? tkKassaOqim(D) : null;
+    _tCalc = oqim ? {vaqt:(m.vaqt||0), qurilma:(m.qurilma||''), oqim:oqim} : null;
+    _tCalcBand = false;
+    renderTillaKassa();
+  }).catch(function(e){ console.error('tilla holat oqish:', e); _tCalcBand=false; });
 }
 function tillaKassaListen(){
   if(_tUnsub) _tUnsub();
@@ -602,19 +733,28 @@ function renderTillaKassa(){
       +'</div>';
     return;
   }
-  // Ulangan lekin snapshot hali yo'q
-  if(!_tSnap){
+  // Snapshot bo'lsa — o'sha (to'liq: zakaz, harakatlar, band/erkin).
+  // Bo'lmasa — holat bo'laklaridan o'zimiz hisoblagani (faqat raqamlar).
+  var s = _tSnap, _tManba = 'snapshot';
+  if(!s && _tCalc){
+    var _q = _tCalc.oqim;
+    s = { vaqt:_tCalc.vaqt, naqd:_q.naqd, lomEkv:_q.lomEkv, toza:_q.toza,
+          erkin:_q.naqd, band:0, bugunKirim:_q.bugunKirim, bugunChiqim:_q.bugunChiqim,
+          zakazlar:[], harakatlar:[], importedIds:[], bekorIds:[], z:null };
+    _tManba = 'hisob';
+  }
+  // Ulangan, lekin cloudda hali hech narsa yo'q
+  if(!s){
     el.innerHTML = '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
-      +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">TILLA KASSA — kutilmoqda... (Tilla ERP hali snapshot yubormagan; Tilla ERPni ochib bitta amal saqlang)</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">TILLA KASSA — kutilmoqda... (bu akkauntda cloudda ma\'lumot topilmadi; Tilla ERP shu email bilan kirib bitta amal saqlashi kerak)</div>'
       +tkAkkauntQatori()+'</div>';
     return;
   }
-  var s = _tSnap;
   function cho(l,v,rang,sub){ return '<div style="background:var(--surf2);border-radius:8px;padding:7px 2px;text-align:center;"><div style="font-size:10px;color:var(--muted);">'+l+'</div><div style="font-size:14px;color:'+rang+';font-weight:500;">'+v+'</div>'+(sub||'')+'</div>'; }
   var naqdSub = (s.band>0) ? '<div style="font-size:10px;margin-top:2px;"><span style="color:var(--green);">erkin $'+fmtD(s.erkin)+'</span> · <span style="color:#5ab4e8;">band $'+fmtD(s.band)+'</span></div>' : '';
   var h = '<div style="background:var(--surf);border:1px solid var(--gold);border-top:2px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:10px;">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
-  h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — jonli</span>';
+  h += '<span style="font-size:11px;color:var(--gold);letter-spacing:.08em;font-weight:600;">TILLA KASSA — '+(_tManba==='hisob'?'hisoblangan':'jonli')+'</span>';
   var _yosh = Math.floor((Date.now()-s.vaqt)/1000);
   var _dotRang = _yosh<120 ? 'var(--green)' : (_yosh<1800 ? '#e8b84c' : 'var(--red)');
   h += '<span style="font-size:10px;color:var(--muted);"><span style="color:'+_dotRang+';">●</span> '+fmtVaqt(s.vaqt)+' · <span id="tk-nisbiy">'+fmtNisbiy(s.vaqt)+'</span></span>';
