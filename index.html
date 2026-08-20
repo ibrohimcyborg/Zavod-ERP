@@ -1,4 +1,4 @@
-<!-- v1.03 -->
+<!-- v1.04 -->
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -445,7 +445,7 @@ if (TEST_MODE) {
 // ═══════════ /TEST REJIMI ═══════════
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 // Versiya. Fayl BIRINCHI qatoridagi <!-- vX.XX --> bilan bir xil bo'lishi SHART.
-var ZAVOD_VER = 'v1.03';
+var ZAVOD_VER = 'v1.04';
 // Versiya belgisi — Tilla ERP dagi bilan bir xil joyda: O'NG PASTDA suzib turadi
 // (Ibrohim: «pasda versiyasini ko'rsatmayapti zavod»). Bosilsa yashiriladi.
 document.addEventListener('DOMContentLoaded', function(){
@@ -728,59 +728,6 @@ function tkKassaMuzlatilgan(D){
   ((D&&D.kassa&&D.kassa.zakazlar)||[]).forEach(function(z){ if(z.holat==='ochiq') s+=parseNum(z.summa); });
   return Math.round(s*100)/100;
 }
-// tkKassaHarakatlar <- kassaHarakatlar (Tilla 4118) — kassa lentasi
-function tkKassaHarakatlar(D){
-  var L=[];
-  function qo(sana,soat,ts,tavsif,manba,dN,dL,dT,extra){
-    L.push({sana:sana||'',soat:soat||'',ts:ts||0,tavsif:tavsif,manba:manba,dN:Math.round((dN||0)*100)/100,dL:roundG(dL||0),dT:roundG(dT||0),extra:extra||''});
-  }
-  (D.klientlar||[]).forEach(function(k){ (k.tarix||[]).forEach(function(op){
-    if(op.tip!=='tolov'||op._kdYopish) return;
-    var pul=tkOpNaqtPul(op);
-    if(pul>0.001) qo(op.sana,op.soat,op.ts,(k.nom||'Klient')+' · sotuv/to\'lov','avto',pul,0,0,'← klientdan naqd');
-  });});
-  (D.lomlar||[]).forEach(function(r){
-    var p=parseNum(r.proba), g=parseNum(r.gramm), s=parseNum(r.summa||0);
-    var is9=(p===999), ekv=is9?0:tkKassaEkv(p,g);
-    if(r.tip==='kirim'){
-      if(r.manba==='kocha') qo(r.sana,r.soat,r.sana_ts,'Lom olish (ko\'cha) · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',-s,ekv,is9?g:0,'→ pul chiqdi, lom keldi');
-      else qo(r.sana,r.soat,r.sana_ts,(r.klientNom||'Klient')+' · lomda to\'lov · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',0,ekv,is9?g:0,'← klientdan lom (naqdga 0)');
-    } else {
-      if(r.manba==='zavod') qo(r.sana,r.soat,r.sana_ts,'Zavodga lom topshirildi · '+p+' · '+fmtG(g)+'g','lom',0,-ekv,is9?-g:0,'→ zavodga gramm');
-      else if(r.manba==='chiqim') qo(r.sana,r.soat,r.sana_ts,'Qo\'lda chiqim (lom) · '+p+' · '+fmtG(g)+'g'+(r.izoh?' · '+r.izoh:''),'qolda',0,-ekv,is9?-g:0,'→ lom chiqdi');
-      else qo(r.sana,r.soat,r.sana_ts,'Lom sotildi · '+p+' · '+fmtG(g)+'g @ '+(r.narx||''),'lom',s,-ekv,is9?-g:0,'→ pul keldi');
-    }
-  });
-  (D.zavodlar||[]).forEach(function(z){ (z.turlar||[]).forEach(function(tr){ (tr.tarix||[]).forEach(function(op){
-    if(op.tip!=='tolov') return;
-    var s=parseNum(op.naqtSumma||0);
-    if(s>0) qo(op.sana,op.soat,op.ts,(z.nom||'Zavod')+' · to\'lov (chiqim)','chiqim',-s,0,0,'→ zavodga pul'+(op.naqtKurs?' @ '+op.naqtKurs:''));
-  });});});
-  ((D.kassa&&D.kassa.snabAmallar)||[]).forEach(function(r){
-    if(r.holat==='bekor') return;
-    if(r.tip==='berish'){
-      var q=[]; if(parseNum(r.pul)>0)q.push('pul −$'+fmtD(r.pul)); if(parseNum(r.lomG)>0)q.push('lom −'+fmtG(r.lomG)+'g'); if(parseNum(r.tozaG)>0)q.push('999 −'+fmtG(r.tozaG)+'g');
-      qo(r.sana,r.soat,r.ts,(r.zavodNom||'Zavod')+' · berish — '+q.join(' · '),'snab',-parseNum(r.pul||0),-parseNum(r.lomG||0),-parseNum(r.tozaG||0),'→ zavodga · kurs '+r.kurs583+'/'+r.kurs999);
-    } else {
-      var is9=parseNum(r.proba)===999, g=parseNum(r.gramm||0);
-      qo(r.sana,r.soat,r.ts,r.proba+' sotib olish · '+fmtG(g)+'g @ '+r.narx,'snab',-parseNum(r.summa||0),is9?0:tkKassaEkv(r.proba,g),is9?g:0,'→ pul chiqdi, '+(is9?'999':'lom')+' keldi');
-    }
-  });
-  ((D.kassa&&D.kassa.qolda)||[]).forEach(function(r){
-    var s=parseNum(r.summa||0);
-    qo(r.sana,r.soat,r.ts,(r.kategoriya||'Qo\'lda')+(r.izoh?' · '+r.izoh:''),'qolda',r.tip==='kirim'?s:-s,0,0,r.tip==='kirim'?'← qo\'lda kirim':'→ qo\'lda chiqim');
-  });
-  ((D.kassa&&D.kassa.tuzatishlar)||[]).forEach(function(tz){
-    var d=parseNum(tz.delta||0);
-    qo(tz.sana,tz.soat,tz.ts,'Z tafovut · '+tz.chontak+(d>0?' +':' ')+(tz.chontak==='naqd'?('$'+fmtD(d)):fmtG(d)+'g'),'Z',tz.chontak==='naqd'?d:0,tz.chontak==='lom'?d:0,tz.chontak==='999'?d:0,'tafovut tuzatish');
-  });
-  L.sort(function(a,b){
-    var ka=tkSanaKey(a.sana)+' '+(a.soat||'00:00'), kb=tkSanaKey(b.sana)+' '+(b.soat||'00:00');
-    if(ka!==kb) return ka<kb?-1:1;
-    return (a.ts||0)-(b.ts||0);
-  });
-  return L;
-}
 // Tilla ERP ning kassaSnapshotObj (18595) qaytaradigan obyektining aynan o'zi —
 // endi uni Tilla yubormaydi, o'zimiz quramiz.
 function tkSnapshotQur(D, m){
@@ -806,11 +753,6 @@ function tkSnapshotQur(D, m){
     bekorIds: (((D.kassa&&D.kassa.snabAmallar)||[]).filter(function(r){return r.holat==='bekor';}).map(function(r){return r.id;})).slice(-100),
     zakazlar: ((D.kassa&&D.kassa.zakazlar)||[]).filter(function(z){return z.holat==='ochiq';})
       .map(function(z){ return {id:z.id, zavodNom:z.zavodNom, summa:z.summa, kurs:z.kurs, muddatTs:z.muddatTs, izoh:z.izoh||''}; }),
-    harakatlar: tkKassaHarakatlar(D).filter(function(r){
-      if(r.manba==='snab' || r.manba==='chiqim' || r.manba==='qolda') return true;
-      if(r.manba==='lom' && (r.dL<0 || r.dT<0)) return true;
-      return false;
-    }).slice(-20).map(function(r){ return {sana:r.sana, soat:r.soat, tavsif:r.tavsif, manba:r.manba, dN:r.dN, dL:r.dL, dT:r.dT}; }),
     z: zx ? {sana:zx.sana, soat:zx.soat||'', naqd:zx.naqd} : null,
     // Tilla ERP v176.6 dagi bilan AYNAN bir xil qoida: bugun bilan kechaning ayirmasi
     bugun: (function(){
@@ -968,22 +910,6 @@ function renderTillaKassa(){
       h += '<span style="color:'+(bekor?'var(--red,#c84545)':(ok?'var(--green)':'#e8b84c'))+';white-space:nowrap;">'+(bekor?'× bekor qilingan':(ok?'✓ qabul':'⧗ kutilmoqda'))+' · '+(r.soat||'')+'</span>';
       h += '</div>';
     });
-  }
-  // Kassa harakatlari (snapshot'dan, oxirgi 20 — yangi tepada)
-  if((s.harakatlar||[]).length){
-    h += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:6px 0 5px;">Kassa harakatlari · oxirgi</div>';
-    h += '<div style="max-height:220px;overflow-y:auto;">';
-    s.harakatlar.slice().reverse().forEach(function(r){
-      var ozg='';
-      if(r.dN) ozg += '<span style="color:'+(r.dN>0?'var(--green)':'var(--red,#c84545)')+';font-weight:500;">'+(r.dN>0?'+':'−')+'$'+fmtD(Math.abs(r.dN))+'</span>';
-      if(r.dL) ozg += (ozg?' ':'')+'<span style="color:#5ab4e8;font-size:10px;">'+(r.dL>0?'+':'−')+fmtG(Math.abs(r.dL))+'g</span>';
-      if(r.dT) ozg += (ozg?' ':'')+'<span style="color:#5ab4e8;font-size:10px;">'+(r.dT>0?'+':'−')+fmtG(Math.abs(r.dT))+'g·999</span>';
-      h += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:5px 8px;background:var(--surf2);border-radius:7px;margin-bottom:4px;align-items:center;">';
-      h += '<span style="color:var(--text);">'+(r.soat?r.soat+' · ':'')+r.tavsif+' <span style="color:var(--muted);font-size:9px;">'+r.manba+'</span><div style="font-size:9px;color:var(--muted);">'+r.sana+'</div></span>';
-      h += '<span style="text-align:right;white-space:nowrap;">'+ozg+'</span>';
-      h += '</div>';
-    });
-    h += '</div>';
   }
   h += '<div style="display:flex;justify-content:space-between;font-size:11px;flex-wrap:wrap;gap:4px;">';
   h += '<span style="color:var(--muted);">Bugun: <span style="color:var(--green);">+$'+fmtD(s.bugunKirim)+'</span> / <span style="color:var(--red);">−$'+fmtD(s.bugunChiqim)+'</span></span>';
