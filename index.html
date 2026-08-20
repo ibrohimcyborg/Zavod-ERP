@@ -1,4 +1,4 @@
-<!-- v1.01 -->
+<!-- v1.03 -->
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -163,7 +163,7 @@ input[type=number]{-moz-appearance:textfield;}
 </div>
 
 <div class="topbar">
-  <div class="logo">⬡ ZAVOD HISOB <span id="zver" style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;"></span></div>
+  <div class="logo">⬡ ZAVOD HISOB</div>
   <div class="topbar-right">
     <button class="theme-btn" onclick="doRefresh()" id="refresh-btn" aria-label="Yangilash" style="border-radius:8px;"><svg id="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Tema" style="border-radius:8px;"><span id="theme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span></button>
@@ -445,9 +445,22 @@ if (TEST_MODE) {
 // ═══════════ /TEST REJIMI ═══════════
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 // Versiya. Fayl BIRINCHI qatoridagi <!-- vX.XX --> bilan bir xil bo'lishi SHART.
-var ZAVOD_VER = 'v1.01';
+var ZAVOD_VER = 'v1.03';
+// Versiya belgisi — Tilla ERP dagi bilan bir xil joyda: O'NG PASTDA suzib turadi
+// (Ibrohim: «pasda versiyasini ko'rsatmayapti zavod»). Bosilsa yashiriladi.
 document.addEventListener('DOMContentLoaded', function(){
-  var e=document.getElementById('zver'); if(e) e.textContent=ZAVOD_VER;
+  try{
+    var v=document.createElement('div');
+    v.id='zavod-ver';
+    v.textContent=ZAVOD_VER;
+    v.style.cssText='position:fixed;bottom:6px;right:6px;z-index:99998;'
+      +'background:rgba(184,137,43,.55);color:#fff;font-size:9px;font-weight:700;'
+      +'padding:2px 7px;border-radius:8px;font-family:sans-serif;letter-spacing:.03em;'
+      +'cursor:pointer;user-select:none;pointer-events:auto;opacity:.75;';
+    v.title='Versiya — bosilsa yashiriladi';
+    v.onclick=function(){ v.style.display='none'; };
+    document.body.appendChild(v);
+  }catch(e){}
 });
 var CREDS = [
   {login:'tilla', parol:'tilla9999', rol:'admin'},
@@ -637,6 +650,12 @@ function tkOpNaqtPul(op){
         - parseNum(op.kartaPul||0) - parseNum(op.perechPul||0))*100)/100;
   return q > 0.005 ? q : n;
 }
+// tkKunOldin <- kunOldin (Tilla 4108) — 'dd.mm.yyyy' dan bir kun oldingisi
+function tkKunOldin(sana){
+  var p=String(sana).split('.'); if(p.length!==3) return sana;
+  var d=new Date(+p[2], +p[1]-1, +p[0]); d.setDate(d.getDate()-1);
+  return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+}
 function tkKassaOqim(D, limitSana){
   if(!D) return null;
   var t = limitSana || today();
@@ -765,6 +784,7 @@ function tkKassaHarakatlar(D){
 // Tilla ERP ning kassaSnapshotObj (18595) qaytaradigan obyektining aynan o'zi —
 // endi uni Tilla yubormaydi, o'zimiz quramiz.
 function tkSnapshotQur(D, m){
+  var _bs = today();
   var o = tkKassaOqim(D);
   if(!o) return null;
   var band = tkKassaMuzlatilgan(D);
@@ -791,11 +811,26 @@ function tkSnapshotQur(D, m){
       if(r.manba==='lom' && (r.dL<0 || r.dT<0)) return true;
       return false;
     }).slice(-20).map(function(r){ return {sana:r.sana, soat:r.soat, tavsif:r.tavsif, manba:r.manba, dN:r.dN, dL:r.dL, dT:r.dT}; }),
-    z: zx ? {sana:zx.sana, soat:zx.soat||'', naqd:zx.naqd} : null
+    z: zx ? {sana:zx.sana, soat:zx.soat||'', naqd:zx.naqd} : null,
+    // Tilla ERP v176.6 dagi bilan AYNAN bir xil qoida: bugun bilan kechaning ayirmasi
+    bugun: (function(){
+      var _b=tkKassaOqim(D, _bs), _k=tkKassaOqim(D, tkKunOldin(_bs));
+      if(!_b||!_k) return null;
+      return {
+        sana:_bs,
+        chiqim:_b.bugunChiqim,
+        naqd:  Math.round(((_b.naqd - _k.naqd) + _b.bugunChiqim)*100)/100,
+        karta: Math.round((_b.karta  - _k.karta )*100)/100,
+        perech:Math.round((_b.perech - _k.perech)*100)/100,
+        lomEkv:roundG(_b.lomEkv - _k.lomEkv),
+        toza:  roundG(_b.toza   - _k.toza)
+      };
+    })()
   };
 }
 // holat hujjatini kuzatadi -> bo'laklarni o'qiydi -> kassani hisoblaydi
 var _tHolatUnsub = null, _tCalcBand = false;
+var _zQoldiqOch = false; // haqiqiy qoldiq qatori ochiqmi (Tilla ERP v176.7 bilan bir xil)
 function tillaHolatListen(){
   if(_tHolatUnsub) _tHolatUnsub();
   _tHolatUnsub = _tDb.collection(tillaKol()).doc('holat').onSnapshot(function(doc){
@@ -874,11 +909,45 @@ function renderTillaKassa(){
     else if(qoldi < 3600000) h += '<div style="background:#2a1010;border:1px solid #e05a5a;border-radius:9px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:#e05a5a;font-weight:600;">⏱ 1 SOATDAN KAM — '+mt+'</span><span style="font-size:11px;color:var(--muted);">'+z.zavodNom+' · $'+fmtD(z.summa)+' @ '+z.kurs+'</span></div>';
     else h += '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:7px 10px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="font-size:12px;color:var(--text);">Zakaz: '+z.zavodNom+(z.izoh?' · '+z.izoh:'')+'</span><span style="font-size:11px;color:var(--muted);">$'+fmtD(z.summa)+' @ '+z.kurs+' · '+mt+'</span></div>';
   });
-  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">';
-  h += cho('Naqd','$'+fmtD(s.naqd),'var(--gold)',naqdSub);
-  h += cho('Lom 583',fmtG(s.lomEkv)+' g','var(--gold)');
-  h += cho('999',fmtG(s.toza)+' g','#5ab4e8');
-  h += '</div>';
+  // Tilla ERP v176.6/v176.7 ko'rinishining aynan o'zi: BUGUNGI harakat ko'rinadi,
+  // haqiqiy qoldiq «Qoldiq» tugmasi ostida turadi (Ibrohim: «zavodgayam shunaqa qil»).
+  var _bg = s.bugun;
+  function _bRang(v){ return v>0.0001 ? 'var(--green)' : (v<-0.0001 ? 'var(--red,#c84545)' : 'var(--muted)'); }
+  function _bPul(v){ return (v<-0.0001?'−':'')+'$'+fmtD(Math.abs(v)); }
+  function _bGr(v){  return (v>0.0001?'+':(v<-0.0001?'−':''))+fmtG(Math.abs(v))+' g'; }
+  if(_bg){
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;">';
+    h += '<span style="font-size:10px;color:var(--gold);letter-spacing:.06em;font-weight:700;">BUGUN · '+_bg.sana+'</span>';
+    h += '<span onclick="_zQoldiqOch=!_zQoldiqOch;renderTillaKassa();" style="cursor:pointer;font-size:10px;color:var(--muted);background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;white-space:nowrap;">Qoldiq '+(_zQoldiqOch?'▴':'▾')+'</span>';
+    h += '</div>';
+    if(_zQoldiqOch){
+      h += '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:8px;">';
+      h += '<div style="font-size:10px;color:var(--muted);letter-spacing:.06em;font-weight:600;margin-bottom:6px;">HAQIQIY QOLDIQ</div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;text-align:center;">';
+      h += '<div><div style="color:var(--muted);">Naqd</div><div style="color:var(--gold);font-size:13px;font-weight:600;">$'+fmtD(s.naqd)+'</div>'+naqdSub+'</div>';
+      h += '<div><div style="color:var(--muted);">Lom 583</div><div style="color:var(--gold);font-size:13px;font-weight:600;">'+fmtG(s.lomEkv)+' g</div></div>';
+      h += '</div>';
+      h += '<div style="text-align:center;font-size:11px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><span style="color:var(--muted);">999 </span><span style="color:#5ab4e8;font-size:13px;font-weight:600;">'+fmtG(s.toza)+' g</span></div>';
+      h += '</div>';
+    }
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">';
+    h += cho('Naqd',_bPul(_bg.naqd),_bRang(_bg.naqd));
+    h += cho('Karta',_bPul(_bg.karta),_bRang(_bg.karta));
+    h += cho('Perech',_bPul(_bg.perech),_bRang(_bg.perech));
+    h += '</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">';
+    h += cho('Chiqim',_bPul(-_bg.chiqim),_bRang(-_bg.chiqim));
+    h += cho('Lom 583',_bGr(_bg.lomEkv),_bRang(_bg.lomEkv));
+    h += cho('999',_bGr(_bg.toza),_bRang(_bg.toza));
+    h += '</div>';
+  } else {
+    // bugungi hisob chiqmasa (eski ma'lumot) — avvalgidek qoldiq ko'rsatiladi
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">';
+    h += cho('Naqd','$'+fmtD(s.naqd),'var(--gold)',naqdSub);
+    h += cho('Lom 583',fmtG(s.lomEkv)+' g','var(--gold)');
+    h += cho('999',fmtG(s.toza)+' g','#5ab4e8');
+    h += '</div>';
+  }
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;">';
   h += '<button onclick="openBerish()" style="background:var(--red-bg,#f5caca);border:1px solid var(--red,#c84545);color:var(--red,#c84545);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">− Berish (zavodga)</button>';
   h += '<button onclick="openOlish()" style="background:var(--green-bg,#c8edcf);border:1px solid var(--green,#2e8f56);color:var(--green,#2e8f56);border-radius:10px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Sotib olish</button>';
