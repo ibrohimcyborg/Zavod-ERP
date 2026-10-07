@@ -1,4 +1,4 @@
-<!-- v1.05 -->
+<!-- v1.06 -->
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -445,7 +445,7 @@ if (TEST_MODE) {
 // ═══════════ /TEST REJIMI ═══════════
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 // Versiya. Fayl BIRINCHI qatoridagi <!-- vX.XX --> bilan bir xil bo'lishi SHART.
-var ZAVOD_VER = 'v1.04';
+var ZAVOD_VER = 'v1.06';
 // Versiya belgisi — Tilla ERP dagi bilan bir xil joyda: O'NG PASTDA suzib turadi
 // (Ibrohim: «pasda versiyasini ko'rsatmayapti zavod»). Bosilsa yashiriladi.
 document.addEventListener('DOMContentLoaded', function(){
@@ -1514,6 +1514,13 @@ function renderHisobot(){
             if(op.kimga) out+='<div style="font-size:12px;color:var(--muted);margin-bottom:3px;">Kimga: <b style="color:var(--text);">'+op.kimga+'</b></div>';
             if(op.naqtSumma>0&&op.naqtKurs>0) out+='<div style="font-size:12px;color:var(--muted);">naqt: '+fmtD(op.naqtSumma)+'$ / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(op.naqtGramm)+'g</b></div>';
             if(op.lomGramm>0&&op.lomKurs>0) out+='<div style="font-size:12px;color:var(--muted);">lom: '+fmtG(op.lomGramm)+'g x '+op.lomKurs+'$/g = '+fmtD(op.lomPul)+'$'+(op.naqtKurs>0?' / '+op.naqtKurs+'$/g = <b style="color:var(--text);">'+fmtG(Math.round(op.lomPul/op.naqtKurs*100)/100)+'g</b>':'')+'</div>';
+            if(op.zapros){   // v1.06: zapros chiqimida pul / lom / 999 tafsiloti
+              var _zP=parseNum(op.zPul)||0, _zL=parseNum(op.zLom)||0, _zT=parseNum(op.zToza)||0;
+              var _gT=Math.round(_zT*1.7*100)/100, _gP=Math.round(((op.jami||0)-_zL-_gT)*100)/100;
+              if(_zP>0) out+='<div style="font-size:12px;color:var(--muted);">pul: '+fmtD(_zP)+'$'+(_gP>0.001?' / '+fmtD(Math.round(_zP/_gP*100)/100)+'$/g':'')+' = <b style="color:var(--text);">'+fmtG(_gP)+'g</b></div>';
+              if(_zL>0) out+='<div style="font-size:12px;color:var(--muted);">lom: '+fmtG(_zL)+'g = <b style="color:var(--text);">'+fmtG(_zL)+'g</b></div>';
+              if(_zT>0) out+='<div style="font-size:12px;color:var(--muted);">999: '+fmtG(_zT)+'g x 1.7 = <b style="color:var(--text);">'+fmtG(_gT)+'g</b></div>';
+            }
             out+='<div style="font-size:12px;color:var(--green);margin-top:3px;font-weight:600;">jami: −'+fmtG(op.jami)+' g</div>';
           }
         });
