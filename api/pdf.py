@@ -3,7 +3,8 @@ import json, io
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, NextPageTemplate, FrameBreak
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from datetime import datetime
@@ -74,14 +75,176 @@ def base_style():
         ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]
 
+# ── v1.05: TUR BO'YICHA HARAKAT (davr boshidagi ostatka + har harakat) ──
+# Davr boshidagi ostatka — dan sanasidan OLDINGI hamma amal (tarixdan).
+# Manfiy ostatka qanday bo'lsa shunday ko'rsatiladi (Ibrohim: «farqi yo'q
+# ko'rsatsin»). Eski jadvallardagi max(0, …) qoidasiga TEGILMADI.
+def _g(x):
+    return round(float(x or 0), 2)
+
+def _fg(x):
+    return f"{x:,.2f}g"
+
+def _fn(x):
+    v = float(x or 0)
+    return f"{v:,.2f}".rstrip('0').rstrip('.') if v != int(v) else f"{int(v):,}"
+
+def _op_qatorlar(op):
+    """[(yozuv, formula, gramm_ishorali)] — gramm yig'indisi balansga teng."""
+    tip = op.get("tip")
+    if tip == "mol":
+        return [("mol olindi", "", _g(op.get("gramm")))]
+    if tip == "vozvrat":
+        return [("vozvrat qilindi", "", -_g(op.get("gramm")))]
+    jami = _g(op.get("jami"))
+    out = []
+    if op.get("zapros"):
+        zP, zL, zT = _g(op.get("zPul")), _g(op.get("zLom")), _g(op.get("zToza"))
+        gT = _g(zT * 1.7)
+        gP = _g(jami - zL - gT)
+        if zP > 0:
+            kurs = f" / {zP / gP:,.2f} kurs" if gP > 0.001 else ""
+            out.append(("zapros: pul berildi", f"{_fn(zP)}$" + kurs, -gP))
+        if zL > 0:
+            out.append(("zapros: lom berildi", f"{zL:,.2f}g lom", -zL))
+        if zT > 0:
+            out.append(("zapros: 999 berildi", f"{zT:,.2f}g x 1.7", -gT))
+    else:
+        nS, nK, nG = _g(op.get("naqtSumma")), op.get("naqtKurs") or 0, _g(op.get("naqtGramm"))
+        lG, lK, lP, lE = _g(op.get("lomGramm")), op.get("lomKurs") or 0, _g(op.get("lomPul")), _g(op.get("lomGEq"))
+        if nS > 0:
+            out.append(("naqt berildi", f"{_fn(nS)}$ / {_fn(nK)} kurs", -nG))
+        if lG > 0:
+            out.append(("lom berildi", f"{lG:,.2f}g x {_fn(lK)} = {_fn(lP)}$ / {_fn(nK)} kurs", -lE))
+    qoldi = _g(-jami - sum(q[2] for q in out))
+    if not out or abs(qoldi) > 0.009:
+        out.append(("to'lov", "", qoldi if out else -jami))
+    return out
+
+def _dan_oldin(sana, dan):
+    return bool(dan) and parse_d(sana) < datetime.strptime(dan, "%Y-%m-%d")
+
+def _gacha_keyin(sana, gacha):
+    return bool(gacha) and parse_d(sana) > datetime.strptime(gacha, "%Y-%m-%d")
+
+def _kun_oldin(dan):
+    from datetime import timedelta
+    return (datetime.strptime(dan, "%Y-%m-%d") - timedelta(days=1)).strftime("%d.%m.%Y")
+
+def _gacha_lbl(gacha):
+    return ".".join(reversed(gacha.split("-"))) if gacha else datetime.now().strftime("%d.%m.%Y")
+
+C_CREAM = colors.HexColor('#fbf1d6')
+C_CARDH = colors.HexColor('#f3ecd9')
+
+def _summary_box(matn, turlar, kenglik):
+    qism = " &nbsp;·&nbsp; ".join(f"{n} {_fg(v)}" for n, v in turlar)
+    t = Table([[P(f"<b>{matn}</b> &nbsp;&nbsp; {qism}", size=9.5, color=colors.HexColor('#5a3e00'))]],
+              colWidths=[kenglik])
+    t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), C_CREAM),
+                           ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#e0c97a')),
+                           ('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                           ('LEFTPADDING', (0, 0), (-1, -1), 8)]))
+    return t
+
+def _tur_karta(zavod_nom, t, dan, gacha, kenglik):
+    bosh = 0.0; ops = []
+    for op in t.get("tarix", []):
+        if _gacha_keyin(op.get("sana", ""), gacha): continue
+        qs = _op_qatorlar(op)
+        if _dan_oldin(op.get("sana", ""), dan):
+            bosh += sum(q[2] for q in qs)
+        else:
+            ops.append((op.get("sana", ""), qs))
+    bosh = _g(bosh)
+    ops.sort(key=lambda r: parse_d(r[0]))   # sort barqaror — bir kundagi tartib saqlanadi
+    if not ops and abs(bosh) < 0.005:
+        return None, bosh, bosh
+    cw = [22*mm, kenglik - 22*mm - 24*mm, 24*mm]
+    grey = colors.HexColor('#8a8a8a')
+    rows = [[P(f"<b>{zavod_nom} · {t['nom']}</b>", size=9.5, align='CENTER'), '', '']]
+    st = [('SPAN', (0, 0), (-1, 0)), ('BACKGROUND', (0, 0), (-1, 0), C_CARDH),
+          ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#cfcfcf')),
+          ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+          ('TOPPADDING', (0, 0), (-1, -1), 2), ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+          ('LEFTPADDING', (0, 0), (-1, -1), 4), ('RIGHTPADDING', (0, 0), (-1, -1), 4)]
+    bal = bosh
+    if dan:
+        rows.append([P(_kun_oldin(dan), size=8, color=grey), P("kun oxiridagi ostatka", size=8.5, color=colors.HexColor('#555555')),
+                     P(f"<b>{_fg(bosh)}</b>", size=9, color=C_GOLD, align='RIGHT')])
+        st.append(('BACKGROUND', (0, len(rows) - 1), (-1, len(rows) - 1), colors.HexColor('#fff8e6')))
+    oldingi = None
+    for i, (sana, qs) in enumerate(ops):
+        for qi, (yoz, f, g) in enumerate(qs):
+            matn = yoz + (f"<br/><font size=7.5 color='#8a8a8a'>{f}</font>" if f else "")
+            rang = C_GREEN if g > 0 else (C_BLUE if yoz == "vozvrat qilindi" else C_RED)
+            rows.append([P(sana if sana != oldingi else "", size=8, color=grey),
+                         P(matn, size=8.5, color=colors.HexColor('#444444')),
+                         P(f"<b>{'+' if g > 0 else ''}{_fg(g)}</b>", size=9, color=rang, align='RIGHT')])
+            oldingi = sana
+            bal = _g(bal + g)
+        kun_tugadi = (i == len(ops) - 1) or ops[i + 1][0] != sana
+        if kun_tugadi:
+            rows.append(['', '', P(f"<b>{_fg(bal)}</b>", size=9, align='RIGHT')])
+            r = len(rows) - 1
+            st += [('LINEABOVE', (0, r), (-1, r), 0.4, colors.HexColor('#e3e3e3')),
+                   ('LINEBELOW', (0, r), (-1, r), 0.6, colors.HexColor('#bdbdbd')),
+                   ('BACKGROUND', (0, r), (-1, r), colors.HexColor('#fafafa'))]
+    rows.append([P("<b>QOLDI</b>", size=9.5), '', P(f"<b>{_fg(bal)}</b>", size=10, color=C_GOLD, align='RIGHT')])
+    r = len(rows) - 1
+    st += [('SPAN', (0, r), (1, r)), ('BACKGROUND', (0, r), (-1, r), C_CREAM),
+           ('LINEABOVE', (0, r), (-1, r), 0.6, colors.HexColor('#cfcfcf'))]
+    tb = Table(rows, colWidths=cw, repeatRows=1)
+    tb.setStyle(TableStyle(st))
+    return tb, bosh, bal
+
+def harakat_bolim(zavodlar, filter_zavod, dan, gacha, label, to_liq, ustun):
+    """Sahifa shablonlari: 'head' (sarlavha + 2 ustun), 'cols' (2 ustun), 'full'."""
+    story = []
+    birinchi = True
+    for z in zavodlar:
+        if filter_zavod and z["nom"] != filter_zavod: continue
+        kartalar = []; boshlar = []; oxirlar = []
+        for t in z.get("turlar", []):
+            tb, b, o = _tur_karta(z["nom"], t, dan, gacha, ustun)
+            if tb is None: continue
+            kartalar.append(tb); boshlar.append((t["nom"], b)); oxirlar.append((t["nom"], o))
+        if not kartalar: continue
+        if not birinchi:
+            story += [NextPageTemplate('head'), PageBreak()]
+        birinchi = False
+        story.append(NextPageTemplate('cols'))
+        story.append(title_p("TILLA HISOB — " + z["nom"] + " · tur bo'yicha harakat"))
+        story.append(sub_p("Davr: " + label))
+        if dan:
+            story.append(_summary_box(f"{_kun_oldin(dan)} kun oxiridagi ostatka: {_fg(_g(sum(v for _, v in boshlar)))}", boshlar, to_liq))
+        story.append(FrameBreak())
+        for k in kartalar:
+            story += [k, Spacer(1, 4*mm)]
+        story.append(_summary_box(f"{_gacha_lbl(gacha)} holatiga ostatka: {_fg(_g(sum(v for _, v in oxirlar)))}", oxirlar, ustun))
+    if story:
+        story += [NextPageTemplate('full'), PageBreak()]
+    return story
+
 # ═══════════════════════════════════════════════════════════════
 # 1. ZAVOD HISOBOTI — A4 landscape
 # ═══════════════════════════════════════════════════════════════
 def build_pdf(zavodlar, filter_zavod, dan, gacha, label):
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=landscape(A4),
+    # v1.05: BaseDocTemplate — harakat bo'limi 2 ustunli sahifalarda, qolgani to'liq kenglikda
+    doc = BaseDocTemplate(buf, pagesize=landscape(A4),
         leftMargin=8*mm, rightMargin=8*mm, topMargin=8*mm, bottomMargin=8*mm)
-    story = []
+    W, H, x0, y0 = doc.width, doc.height, doc.leftMargin, doc.bottomMargin
+    gap, hh = 6*mm, 30*mm
+    cw = (W - gap) / 2
+    t_full = PageTemplate('full', [Frame(x0, y0, W, H, id='f')])
+    t_head = PageTemplate('head', [Frame(x0, y0 + H - hh, W, hh, id='h'),
+                                   Frame(x0, y0, cw, H - hh, id='l1'),
+                                   Frame(x0 + cw + gap, y0, cw, H - hh, id='r1')])
+    t_cols = PageTemplate('cols', [Frame(x0, y0, cw, H, id='l'),
+                                   Frame(x0 + cw + gap, y0, cw, H, id='r')])
+    story = harakat_bolim(zavodlar, filter_zavod, dan, gacha, label, W - 12, cw - 12)   # v1.05
+    doc.addPageTemplates([t_head, t_cols, t_full] if story else [t_full, t_head, t_cols])
 
     # ── Jadval 1: Kirdi-chiqdi ──
     HDR = ["Sana","Zavod","Tur","+/-","Kimga","Kirim(g)","Naqt($)","Kurs","Naqt→g","Lom(g)","Lom($)","Chiqim(g)","Ostatka(g)"]
